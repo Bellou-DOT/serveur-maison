@@ -19,6 +19,16 @@ if [ ! -f "$CONF" ]; then
   exit 0
 fi
 . "$CONF"
+if [ -z "$IP_SERVEUR" ] || [ -z "$INTERFACE" ] || [ -z "$RESEAU_MAISON" ]; then
+  # Réseau détecté depuis la route par défaut (carte, adresse, réseau), puis écrit dans les réglages
+  INTERFACE=${INTERFACE:-$(ip route show default | awk '{print $5; exit}')}
+  CIDR=$(ip -4 -o addr show dev "$INTERFACE" | awk '{print $4; exit}')
+  [ -n "$CIDR" ] || { echo "Pas de réseau détecté : branche le serveur à la box, ou remplis IP_SERVEUR, INTERFACE et RESEAU_MAISON dans $CONF"; exit 1; }
+  IP_SERVEUR=${IP_SERVEUR:-${CIDR%/*}}
+  RESEAU_MAISON=${RESEAU_MAISON:-$(python3 -c "import ipaddress, sys; print(ipaddress.ip_interface(sys.argv[1]).network)" "$CIDR")}
+  sudo sed -i -e "s#^IP_SERVEUR=\"[^\"]*\"#IP_SERVEUR=\"$IP_SERVEUR\"#" -e "s#^INTERFACE=\"[^\"]*\"#INTERFACE=\"$INTERFACE\"#"     -e "s#^RESEAU_MAISON=\"[^\"]*\"#RESEAU_MAISON=\"$RESEAU_MAISON\"#" "$CONF"
+  echo "Réseau détecté : $IP_SERVEUR sur $INTERFACE ($RESEAU_MAISON). Pense à réserver cette adresse dans ta box."
+fi
 U=$(id -un)
 H=$HOME
 

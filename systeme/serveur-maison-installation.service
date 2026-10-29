@@ -1,0 +1,14 @@
+[Unit]
+Description=Installation de serveur-maison au premier démarrage (installé par la clé USB)
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=!/var/lib/serveur-maison-installe
+
+[Service]
+# exec et non oneshot : le démarrage du PC n'attend pas la fin de l'installation
+Type=exec
+User=@UTILISATEUR@
+ExecStart=@ACCUEIL@/serveur-maison/cle-usb/premier-demarrage.sh
+
+[Install]
+WantedBy=multi-user.target

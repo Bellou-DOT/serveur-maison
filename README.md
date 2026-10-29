@@ -15,9 +15,25 @@ Tout est en français et prévu pour **Ubuntu 24.04** sur un PC dédié (8 Go de
 
 ## Installation
 
+### Le plus simple : la clé USB qui fait tout
+
+Sur un PC Windows, avec une clé USB d'au moins 8 Go :
+
+1. Clic droit sur [cle-usb/preparer-cle.ps1](cle-usb/preparer-cle.ps1) → **Exécuter avec PowerShell**. Il pose quelques
+   questions (nom du serveur, compte, Wi-Fi, films et photos oui/non), télécharge Ubuntu Server (4 Go) et prépare la clé.
+2. Abonne-toi dans l'appli **ntfy** au sujet qu'il affiche.
+3. Démarre le futur serveur sur la clé (touche du menu de démarrage : F12, F11, F10, Échap ou F2 selon la marque),
+   tape **yes** à l'unique question. ⚠ Le disque de ce PC est entièrement effacé.
+4. Retire la clé quand le PC redémarre. Tout le reste se fait seul : tu reçois une notification « Serveur prêt ✅ »
+   avec l'adresse du portail et ce qui reste à faire (créer tes comptes).
+
+La clé contient les mots de passe du Wi-Fi et du compte : reformate-la ensuite.
+
+### Ubuntu déjà installé
+
 Il faut un PC dédié avec **Ubuntu 24.04** installé, branché sur la box. Ensuite, deux façons de faire.
 
-### Le plus simple : demander à une IA
+#### Demander à une IA
 
 Installe un assistant de code en ligne de commande sur le serveur (par exemple [Claude Code](https://claude.com/claude-code)),
 ouvre-le dans le dossier du dépôt et dis-lui simplement **« installe le serveur »**.
@@ -30,7 +46,7 @@ cd serveur-maison
 claude          # puis : « installe le serveur »
 ```
 
-### À la main
+#### À la main
 
 ```bash
 git clone <adresse-du-dépôt> serveur-maison

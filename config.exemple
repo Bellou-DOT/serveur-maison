@@ -6,9 +6,10 @@ NOM_PORTAIL="MonServ"              # titre du portail web et des notifications
 HOTE="monserv"                     # le portail répond sur http://monserv (par le DNS du VPN)
 
 # ---------- Réseau de la maison ----------
-IP_SERVEUR="192.168.1.20"          # adresse fixe du serveur : à réserver dans la box (bail DHCP statique)
-RESEAU_MAISON="192.168.1.0/24"
-INTERFACE="wlo1"                   # carte réseau du serveur (commande : ip -br link)
+# Vides = détectés à l'installation. Réserve ensuite cette adresse dans la box (bail DHCP statique).
+IP_SERVEUR=""                      # ex. 192.168.1.20
+RESEAU_MAISON=""                   # ex. 192.168.1.0/24
+INTERFACE=""                       # carte réseau (commande : ip -br link), ex. wlo1
 DOMAINE=""                         # adresse publique pour le VPN (ex. moi.duckdns.org) ; vide = IP publique
 DUCKDNS_JETON=""                   # jeton DuckDNS si DOMAINE est en .duckdns.org (mise à jour de l'IP toutes les 5 min)
 

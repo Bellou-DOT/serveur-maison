@@ -1,0 +1,43 @@
+# Installation automatique d'Ubuntu Server pour serveur-maison (rempli par preparer-cle.ps1).
+# Démarrer un PC sur cette clé EFFACE SON DISQUE, après une seule question : « Continue with autoinstall? » → yes
+autoinstall:
+  version: 1
+  locale: fr_FR.UTF-8
+  keyboard:
+    layout: fr
+  timezone: Europe/Paris
+  refresh-installer:
+    update: no
+  network:
+    version: 2
+    ethernets:
+      cable:
+        match:
+          name: "en*"
+        dhcp4: true
+        optional: true
+@WIFI@
+  storage:
+    layout:
+      name: direct
+  identity:
+    hostname: @HOTE@
+    username: @UTILISATEUR@
+    # mot de passe provisoire, remplacé par le tien à la fin (late-commands, fichier compte.txt de la clé)
+    password: '$6$YpC57ZtDlQa2b4yR$IRiwTlxk28ZdQ4qANmvLg2B3WFXhTpOjyuD8i0w1RP0O.53ALG9fclcACYYGBo5YgFOjS8JO1H3k1aW.UodrC.'
+  ssh:
+    install-server: true
+    allow-pw: true
+  packages:
+    - wpasupplicant
+  late-commands:
+    - chpasswd -R /target < /cdrom/compte.txt
+    - cp -a /cdrom/serveur-maison /target/home/@UTILISATEUR@/serveur-maison
+    - install -D -m 600 /cdrom/sujet-ntfy.txt /target/home/@UTILISATEUR@/.surveillance/sujet
+    - chmod 700 /target/home/@UTILISATEUR@/.surveillance
+    - curtin in-target -- chown -R @UTILISATEUR@:@UTILISATEUR@ /home/@UTILISATEUR@/serveur-maison /home/@UTILISATEUR@/.surveillance
+    - install -m 640 /cdrom/serveur-maison.conf /target/etc/serveur-maison.conf
+    - curtin in-target -- chgrp @UTILISATEUR@ /etc/serveur-maison.conf
+    - sh -c 'echo "@UTILISATEUR@ ALL=(ALL) NOPASSWD:ALL" > /target/etc/sudoers.d/serveur-maison && chmod 440 /target/etc/sudoers.d/serveur-maison'
+    - install -m 644 /cdrom/serveur-maison-installation.service /target/etc/systemd/system/
+    - curtin in-target -- systemctl enable serveur-maison-installation.service
