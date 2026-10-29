@@ -371,11 +371,33 @@ def page(nom='portail.html'):
 
 RELAIS = 'http://127.0.0.1:9091'  # Transmission interdit d'être affiché ailleurs que chez lui : on le sert depuis le portail
 ENTETES_RELAYES = ('Authorization', 'Content-Type', 'X-Transmission-Session-Id', 'Accept', 'If-None-Match')
+# Noms sous lesquels on joint le portail : tout autre nom (« DNS rebinding » depuis une page web piégée) est refusé
+HOTES = {C['HOTE'], *(f"{C['HOTE']}.{x}" for x in ('lan', 'home', 'local')), C['IP_SERVEUR'], '10.8.0.1', 'localhost', '127.0.0.1'} - {''}
+
+
+def hote_autorise(entete):
+    return (entete or '').rsplit(':', 1)[0].lower() in HOTES
+
+
+def rpc_autorise(corps):
+    """Transmission peut lancer un programme en fin de téléchargement ou écrire n'importe où : par le portail, seuls
+    les téléchargements dans le dossier des médias sont permis (sinon un appareil admin piraté = serveur piraté)."""
+    try:
+        d = json.loads(corps or b'{}')
+    except ValueError:
+        return False
+    args = d.get('arguments') or {}
+    if any(k.startswith('script-') for k in args):
+        return False
+    dossiers = [args[k] for k in ('download-dir', 'incomplete-dir', 'location') if k in args]
+    return all(isinstance(x, str) and '..' not in x and x.startswith(C['MEDIAS_BRUT'] + '/') for x in dossiers)
 
 
 class Portail(BaseHTTPRequestHandler):
     def relayer(self):
         corps = self.rfile.read(int(self.headers.get('Content-Length', 0) or 0)) if self.command == 'POST' else None
+        if corps is not None and not rpc_autorise(corps):
+            return self.envoyer(403, '{"result": "refusé par le portail"}', 'application/json')
         req = urllib.request.Request(RELAIS + self.path, data=corps, method=self.command,
                                      headers={**{h: self.headers[h] for h in ENTETES_RELAYES if self.headers.get(h)},
                                               # relais réservé aux appareils admin : le portail s'identifie à ta place
@@ -403,6 +425,8 @@ class Portail(BaseHTTPRequestHandler):
         self.wfile.write(b)
 
     def do_GET(self):
+        if not hote_autorise(self.headers.get('Host')):
+            return self.envoyer(403, 'Adresse inconnue.')
         u = urlparse(self.path)
         admin = est_admin(self.client_address[0])
         if not admin and (u.path.startswith(('/transmission/', '/film/')) or u.path in ('/telechargements', '/serveur', '/systeme', '/pc')):
@@ -452,7 +476,7 @@ class Portail(BaseHTTPRequestHandler):
         self.envoyer(404, 'Introuvable')
 
     def do_POST(self):
-        if not est_admin(self.client_address[0]):
+        if not hote_autorise(self.headers.get('Host')) or not est_admin(self.client_address[0]):
             return self.envoyer(403, '{}', 'application/json')
         if self.path.startswith('/transmission/'):
             return self.relayer()
@@ -507,6 +531,14 @@ def test():
     assert est_admin('127.0.0.1') and est_admin('10.8.0.2') and not est_admin('192.168.1.250')
     ATTENTE.unlink()
     assert len(bytes([255]) * 6 + bytes.fromhex('aa:bb:cc:dd:ee:ff'.replace(':', '')) * 16) == 102
+    assert hote_autorise('127.0.0.1:80') and hote_autorise('10.8.0.1') and not hote_autorise('pirate.example.com')
+    assert not hote_autorise(None) and not hote_autorise('')
+    ok = '{"method": "torrent-add", "arguments": {"filename": "x", "download-dir": "%s/Téléchargements"}}' % C['MEDIAS_BRUT']
+    assert rpc_autorise(ok.encode()) and rpc_autorise(b'{"method": "torrent-get", "arguments": {"fields": ["id"]}}')
+    assert not rpc_autorise(b'{"method": "session-set", "arguments": {"script-torrent-done-enabled": true}}')
+    assert not rpc_autorise(b'{"method": "torrent-add", "arguments": {"download-dir": "/home/x/.ssh"}}')
+    assert not rpc_autorise(('{"arguments": {"location": "%s/../../etc"}}' % C['MEDIAS_BRUT']).encode())
+    assert not rpc_autorise(b'pas du json')
     ORDRE_PC['veille'] = time.time()
     assert ordre_pc() == {'veille': True} and ordre_pc() == {'veille': False}
     m = systeme()
