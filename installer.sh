@@ -56,6 +56,7 @@ sudo usermod -aG jellyfin "$U"
 # dessous. Une faille dans l'un d'eux ne donne pas le serveur (ton compte, lui, a sudo sans mot de passe).
 M=/var/lib/medias
 id medias >/dev/null 2>&1 || sudo useradd --system --create-home --home-dir "$M" --shell /usr/sbin/nologin -g jellyfin medias
+sudo chmod 711 "$M"  # ton compte y lit le mot de passe de Transmission, sans pouvoir lister le reste
 mkdir -p "$H/outils" "$H/sauvegardes" "$H/.surveillance"
 chmod 700 "$H/.surveillance"
 # Les services lisent ~/outils sans pouvoir lister ton dossier ni modifier les scripts (lancés par tes tâches cron)
