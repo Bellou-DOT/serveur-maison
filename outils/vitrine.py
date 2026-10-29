@@ -100,7 +100,7 @@ def test():
         (brut / 'Film' / 'Saga' / 'bon.srt').write_text('1')
         assert synchroniser(brut, vitrine, liens=('Séries', 'Prive')) == ['vide.mkv']
         assert sorted(str(p.relative_to(vitrine)) for p in vitrine.rglob('*') if p.is_symlink()) == \
-            ['Prive', 'Film/Saga/bon.srt', 'Film/bon.mkv', 'Séries']
+            ['Film/Saga/bon.srt', 'Film/bon.mkv', 'Prive', 'Séries']
         (brut / 'Film' / 'bon.mkv').unlink()  # film retiré du disque : son lien disparaît
         synchroniser(brut, vitrine)
         assert not (vitrine / 'Film' / 'bon.mkv').is_symlink()
