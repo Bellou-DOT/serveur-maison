@@ -34,7 +34,7 @@ cron() { # ajoute (ou remplace) la ligne de crontab qui contient $1
 
 etape "Paquets de base"
 sudo apt-get update -qq
-paquets curl ca-certificates python3 nftables wireguard qrencode smartmontools
+paquets curl ca-certificates python3 python3-yaml nftables wireguard qrencode smartmontools
 sudo timedatectl set-timezone "$FUSEAU"
 # Les scripts de nuit (cron) relancent des services et lisent les bases : sudo sans mot de passe pour ce compte.
 echo "$U ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/serveur-maison >/dev/null
@@ -210,10 +210,19 @@ etape "Vérifications"
 python3 "$H/outils/portail.py" --test
 python3 "$H/outils/vitrine.py" --test
 "$H/outils/surveillance.sh" --test
+python3 "$H/outils/configurer.py" --test
+
+etape "Réglages des services (liens entre eux, bibliothèques, VPN…)"
+if oui AVEC_MEDIAS; then  # au premier démarrage, Jellyfin et les *arr mettent un moment à répondre
+  for url in http://127.0.0.1:8096/health http://127.0.0.1:7878/ping http://127.0.0.1:8989/ping http://127.0.0.1:9696/ping; do
+    for _ in $(seq 90); do curl -fs -m 2 -o /dev/null "$url" && break; sleep 2; done
+  done
+fi
+python3 "$H/outils/configurer.py"
 
 cat <<EOF
 
-✅ Installation terminée. Il reste quelques réglages à faire à la main : voir README.md, « Après l'installation ».
+✅ Installation terminée. Fais les étapes « Reste à faire par toi » ci-dessus, puis relance ~/outils/configurer.py.
    Portail       : http://$IP_SERVEUR  (et http://$HOTE par le VPN)
    Notifications : appli ntfy, abonne-toi au sujet « $(cat "$H/.surveillance/sujet") » (une notification d'essai vient de partir)
    VPN           : $H/vpn/telephone.png (QR code à scanner dans l'appli WireGuard)

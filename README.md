@@ -15,38 +15,47 @@ Tout est en français et prévu pour **Ubuntu 24.04** sur un PC dédié (8 Go de
 
 ## Installation
 
+Il faut un PC dédié avec **Ubuntu 24.04** installé, branché sur la box. Ensuite, deux façons de faire.
+
+### Le plus simple : demander à une IA
+
+Installe un assistant de code en ligne de commande sur le serveur (par exemple [Claude Code](https://claude.com/claude-code)),
+ouvre-le dans le dossier du dépôt et dis-lui simplement **« installe le serveur »**.
+Il suit les consignes de [AGENTS.md](AGENTS.md) : il remplit les réglages, installe tout, relie les services entre eux,
+et ne te demande que ce qui doit venir de toi (créer tes comptes, choisir tes mots de passe, réglages de ta box).
+
+```bash
+git clone <adresse-du-dépôt> serveur-maison
+cd serveur-maison
+claude          # puis : « installe le serveur »
+```
+
+### À la main
+
 ```bash
 git clone <adresse-du-dépôt> serveur-maison
 cd serveur-maison
 ./installer.sh                         # crée /etc/serveur-maison.conf
 sudo nano /etc/serveur-maison.conf     # tes réglages : noms, adresse IP, ce qu'il faut installer…
-./installer.sh                         # installe tout (compter 15 à 30 minutes)
+./installer.sh                         # installe et règle tout (15 à 30 minutes)
 ```
-
-Le fichier de réglages est commenté ligne par ligne (modèle : [config.exemple](config.exemple)). On peut relancer `./installer.sh` autant de fois qu'on veut, par exemple après avoir activé un composant : rien de ce qui existe n'est écrasé.
 
 Avant de commencer :
 - **Réserve une adresse IP fixe** pour le serveur dans ta box (bail DHCP statique), et mets-la dans `IP_SERVEUR`.
-- **Ouvre les ports** dans la box vers le serveur : UDP 51820 (VPN), c'est tout.
+- **Ouvre le port UDP 51820** dans la box vers le serveur (VPN). C'est le seul.
 - Une **adresse fixe sur Internet** est conseillée (gratuite sur [duckdns.org](https://www.duckdns.org)) : `DOMAINE` et `DUCKDNS_JETON`.
 
-## Après l'installation
+Le fichier de réglages est commenté ligne par ligne (modèle : [config.exemple](config.exemple)). On peut relancer
+`./installer.sh` autant de fois qu'on veut : rien de ce qui existe n'est écrasé.
 
-Quelques réglages passent forcément par les pages web des services (création de comptes, choix personnels) :
+À la fin, l'installation a déjà relié les services entre eux (bibliothèques Jellyfin, Transmission dans Radarr et Sonarr,
+Prowlarr, garde-fou des gros films, notifications…) et affiche **la liste de ce qui reste à faire par toi** :
+surtout créer tes comptes. Après chaque étape, relance `~/outils/configurer.py` : il termine ce qui vient de devenir
+possible (Seerr, AdGuard). Il reste aussi, côté téléphone :
 
-1. **Notifications** : installe l'appli **ntfy** sur le téléphone et abonne-toi au sujet affiché à la fin de l'installation.
-2. **VPN** : scanne `~/vpn/telephone.png` dans l'appli **WireGuard**. Un autre appareil : `~/outils/vpn-ajouter.sh portable`.
-3. **AdGuard Home** (`http://IP:3000`) : à l'assistant, choisis l'interface **wg0 (10.8.0.1)** pour le DNS. Puis *Filtres → Réécritures DNS* : `HOTE` → `10.8.0.1` (remplace HOTE par ta valeur), pour que `http://HOTE` marche par le VPN.
-4. **Jellyfin** (`http://IP:8096`) : crée ton compte, puis les bibliothèques **Films** → `MEDIAS/Film` et **Séries** → `MEDIAS/Séries`. Pour autoriser la suppression depuis l'appli : *Tableau de bord → Utilisateurs → ton compte → Autoriser la suppression de médias*.
-5. **Transmission** : rien à faire, il s'ouvre depuis le portail (mot de passe dans `~/.transmission-mdp`).
-6. **Prowlarr** (`:9696`), **Radarr** (`:7878`), **Sonarr** (`:8989`) : crée les comptes, ajoute tes sources dans Prowlarr et relie-le à Radarr et Sonarr. Dans Radarr et Sonarr :
-   - client de téléchargement **Transmission** (`127.0.0.1:9091`, ton nom d'utilisateur, mot de passe de `~/.transmission-mdp`), option **Ajouter en pause** cochée ;
-   - dossier racine `MEDIAS_BRUT/Film` (Radarr) et `MEDIAS_BRUT/Séries` (Sonarr) ;
-   - *Connexions → Script personnalisé*, déclencheur **À la récupération**, chemin `~/outils/garde-fou-film.sh` : c'est lui qui lance les petits téléchargements et demande ton accord pour les gros.
-7. **Seerr** (`:5055`) : connecte-le à Jellyfin, Radarr et Sonarr.
-8. **Immich** (`:2283`) : crée le compte admin, puis installe l'appli sur le téléphone avec l'adresse `http://IP:2283`.
-9. **Partage réseau** : `sudo smbpasswd -a $USER` pour choisir le mot de passe du dossier partagé `\\IP\medias`.
-10. **Copie des sauvegardes sur Google Drive** (facultatif) : `rclone config`, remote nommé `drive`. La sauvegarde de la nuit l'utilise toute seule.
+- **Notifications** : appli **ntfy**, abonne-toi au sujet affiché à la fin de l'installation.
+- **VPN** : scanne `~/vpn/telephone.png` dans l'appli **WireGuard**. Un autre appareil : `~/outils/vpn-ajouter.sh portable`.
+- **Copie des sauvegardes sur Google Drive** (facultatif) : `rclone config`, remote nommé `drive`.
 
 ### Disque externe pour les films
 
