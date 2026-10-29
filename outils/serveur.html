@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Serveur en direct</title>
+<style>
+  :root {
+    --nuit:#0d0b1e; --texte:#f1efff; --doux:#a9a3c9; --verre:rgba(255,255,255,.06); --bord:rgba(255,255,255,.1);
+    --violet:#a78bfa; --rose:#f472b6; --cyan:#22d3ee; --vert:#34d399; --ambre:#fbbf24; --rouge:#fb7185;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; color:var(--texte); background:var(--nuit);
+    font:15px/1.4 ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:1040px; margin:0 auto; padding:20px 16px 40px; }
+  h1 { margin:0 0 4px; font-size:24px; letter-spacing:-.02em; }
+  .sous { color:var(--doux); font-size:13px; margin:0 0 18px; }
+  .sous b { color:var(--vert); font-weight:600; }
+  .sous b.ko { color:var(--rouge); }
+  .grille { display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); }
+  .carte { background:var(--verre); border:1px solid var(--bord); border-radius:18px; padding:14px 16px; min-width:0; }
+  .carte h2 { margin:0 0 6px; font-size:13px; font-weight:600; color:var(--doux); text-transform:uppercase; letter-spacing:.06em; }
+  .valeur { font-size:30px; font-weight:700; letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+  .valeur small { font-size:14px; font-weight:500; color:var(--doux); margin-left:4px; }
+  .detail { color:var(--doux); font-size:13px; font-variant-numeric:tabular-nums; }
+  svg.courbe { width:100%; height:46px; display:block; margin-top:8px; }
+  .barre { height:8px; border-radius:6px; background:rgba(255,255,255,.08); overflow:hidden; margin:6px 0 4px; }
+  .barre i { display:block; height:100%; border-radius:6px; background:var(--c, var(--violet)); transition:width .6s; }
+  .large { grid-column:1 / -1; }
+  ul { list-style:none; margin:0; padding:0; }
+  li { display:flex; justify-content:space-between; gap:10px; padding:5px 0; border-top:1px solid var(--bord); font-size:14px; }
+  li:first-child { border-top:0; }
+  .services { display:flex; flex-wrap:wrap; gap:8px; }
+  .services span { padding:5px 10px; border-radius:20px; background:rgba(255,255,255,.06); font-size:13px; }
+  .services span::before { content:""; display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; background:var(--vert); }
+  .services span.ko::before { background:var(--rouge); }
+  .chaud { color:var(--ambre); } .brulant { color:var(--rouge); }
+</style>
+</head>
+<body>
+<main>
+  <h1>📊 Serveur en direct</h1>
+  <p class="sous">Mise à jour toutes les 2 secondes · <b id="lien">connexion…</b></p>
+  <div class="grille">
+    <section class="carte"><h2>Processeur</h2><div class="valeur" id="cpu">–</div><div class="detail" id="charge"></div><svg class="courbe" id="cCpu" viewBox="0 0 90 40" preserveAspectRatio="none"></svg></section>
+    <section class="carte"><h2>Température</h2><div class="valeur" id="temp">–</div><div class="detail" id="tempDetail"></div><svg class="courbe" id="cTemp" viewBox="0 0 90 40" preserveAspectRatio="none"></svg></section>
+    <section class="carte"><h2>Mémoire</h2><div class="valeur" id="ram">–</div><div class="barre"><i id="bRam" style="--c:var(--cyan)"></i></div><div class="detail" id="ramDetail"></div></section>
+    <section class="carte"><h2>Réseau</h2><div class="valeur" id="net">–</div><div class="detail" id="netDetail"></div><svg class="courbe" id="cNet" viewBox="0 0 90 40" preserveAspectRatio="none"></svg></section>
+    <section class="carte"><h2>Batterie</h2><div class="valeur" id="bat">–</div><div class="detail" id="batDetail"></div></section>
+    <section class="carte"><h2>Allumé depuis</h2><div class="valeur" id="uptime">–</div></section>
+    <section class="carte" id="disques"><h2>Stockage</h2></section>
+    <section class="carte"><h2>Qui travaille ?</h2><ul id="processus"></ul></section>
+    <section class="carte large"><h2>Services</h2><div class="services" id="services"></div></section>
+  </div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const NOMS = { jellyfin:'Jellyfin', docker:'Docker (Seerr, Immich)', radarr:'Radarr', sonarr:'Sonarr', prowlarr:'Prowlarr',
+  'transmission-daemon':'Transmission', minecraft:'Minecraft', palworld:'Palworld', panneau:'Panneau des jeux', 'veille-jeux':'Veille des jeux', iw4x:'MW2 (IW4x)' };
+const histo = { cpu:[], temp:[], net:[] };
+let avant = null;
+
+const go = (o) => o >= 1e12 ? (o / 1e12).toFixed(2) + ' To' : o >= 1e9 ? (o / 1e9).toFixed(o >= 1e11 ? 0 : 1) + ' Go' : (o / 1e6).toFixed(0) + ' Mo';
+const debit = (o) => o >= 1e6 ? (o / 1e6).toFixed(1) + ' Mo/s' : (o / 1e3).toFixed(0) + ' ko/s';
+
+function courbe(svg, points, max, couleur) {
+  const n = points.length;
+  if (n < 2) return;
+  const xy = points.map((v, i) => `${(90 * i / 89).toFixed(1)},${(39 - 37 * Math.min(v / max, 1)).toFixed(1)}`);
+  const decal = 90 - 90 * (n - 1) / 89; // la courbe arrive par la droite tant qu'on n'a pas 3 minutes d'historique
+  svg.innerHTML = `<g transform="translate(${decal.toFixed(1)} 0)"><polygon points="0,40 ${xy.join(' ')} ${(90 * (n - 1) / 89).toFixed(1)},40" fill="${couleur}" opacity=".15"/>`
+    + `<polyline points="${xy.join(' ')}" fill="none" stroke="${couleur}" stroke-width="1.5" vector-effect="non-scaling-stroke"/></g>`;
+}
+function pousser(t, v) { t.push(v); if (t.length > 90) t.shift(); }
+
+async function relever() {
+  let m;
+  try { m = await (await fetch('/systeme', { cache:'no-store' })).json(); $('lien').textContent = 'en direct'; $('lien').className = ''; }
+  catch { $('lien').textContent = 'serveur injoignable'; $('lien').className = 'ko'; return; }
+  const maintenant = performance.now();
+
+  if (avant) {
+    const total = m.cpu.reduce((a, b) => a + b, 0) - avant.cpu.reduce((a, b) => a + b, 0);
+    const repos = (m.cpu[3] + m.cpu[4]) - (avant.cpu[3] + avant.cpu[4]); // idle + iowait
+    const pct = total > 0 ? Math.max(0, 100 * (1 - repos / total)) : 0;
+    $('cpu').innerHTML = `${pct.toFixed(0)}<small>%</small>`;
+    pousser(histo.cpu, pct); courbe($('cCpu'), histo.cpu, 100, 'var(--violet)');
+    const s = (maintenant - avant.t) / 1000;
+    const rx = (m.reseau[0] - avant.reseau[0]) / s, tx = (m.reseau[1] - avant.reseau[1]) / s;
+    $('net').innerHTML = `${debit(rx)}`;
+    $('netDetail').textContent = `↓ reçu ${debit(rx)} · ↑ envoyé ${debit(tx)}`;
+    pousser(histo.net, rx + tx); courbe($('cNet'), histo.net, Math.max(1e6, ...histo.net), 'var(--cyan)');
+  }
+  avant = { cpu:m.cpu, reseau:m.reseau, t:maintenant };
+  $('charge').textContent = `Charge : ${m.charge.map((c) => c.toFixed(2).replace('.', ',')).join(' · ')} (${m.coeurs} fils)`;
+
+  if (m.temp != null) {
+    $('temp').innerHTML = `${m.temp.toFixed(0)}<small>°C</small>`;
+    $('temp').className = 'valeur' + (m.temp >= 85 ? ' brulant' : m.temp >= 75 ? ' chaud' : '');
+    $('tempDetail').textContent = m.temp >= 85 ? 'Brûlant : alerte sur le téléphone à 90 °C' : m.temp >= 75 ? 'Chaud, ça travaille' : 'Tranquille';
+    pousser(histo.temp, m.temp); courbe($('cTemp'), histo.temp, 100, m.temp >= 75 ? 'var(--ambre)' : 'var(--vert)');
+  }
+
+  const utilisee = m.ram.total - m.ram.dispo;
+  $('ram').innerHTML = `${(100 * utilisee / m.ram.total).toFixed(0)}<small>%</small>`;
+  $('bRam').style.width = (100 * utilisee / m.ram.total) + '%';
+  $('ramDetail').textContent = `${go(utilisee)} utilisés sur ${go(m.ram.total)}`;
+
+  if (m.batterie) {
+    const etats = { Charging:'En charge', Discharging:'Sur batterie ⚠️', Full:'Pleine, sur secteur', 'Not charging':'Sur secteur' };
+    $('bat').innerHTML = `${m.batterie.pct}<small>%</small>`;
+    $('batDetail').textContent = etats[m.batterie.etat] || m.batterie.etat;
+  }
+
+  const j = Math.floor(m.demarrage / 86400), h = Math.floor(m.demarrage % 86400 / 3600), mn = Math.floor(m.demarrage % 3600 / 60);
+  $('uptime').innerHTML = j ? `${j}<small>j</small> ${h}<small>h</small>` : `${h}<small>h</small> ${mn}<small>min</small>`;
+
+  $('disques').replaceChildren(Object.assign(document.createElement('h2'), { textContent:'Stockage' }), ...m.disques.map((d) => {
+    const pct = 100 * (1 - d.libre / d.total);
+    const div = document.createElement('div');
+    div.innerHTML = `<div class="detail">${d.nom}</div><div class="barre"><i style="width:${pct}%;--c:var(${pct >= 90 ? '--rouge' : pct >= 80 ? '--ambre' : '--violet'})"></i></div>`
+      + `<div class="detail">${go(d.libre)} libres sur ${go(d.total)}</div>`;
+    return div;
+  }));
+
+  $('processus').replaceChildren(...(m.processus.length ? m.processus : [{ nom:'Rien de notable', cpu:null }]).map((p) => {
+    const li = document.createElement('li');
+    li.append(Object.assign(document.createElement('span'), { textContent:p.nom }),
+      Object.assign(document.createElement('span'), { className:'detail', textContent:p.cpu == null ? '' : `${(p.cpu / m.coeurs).toFixed(1).replace(".", ",")} % du CPU` }));
+    return li;
+  }));
+
+  $('services').replaceChildren(...Object.entries(m.services).map(([k, v]) =>
+    Object.assign(document.createElement('span'), { textContent:NOMS[k] || k, className:v === 'active' ? '' : 'ko', title:v === 'active' ? 'En marche' : 'Arrêté' })));
+}
+relever();
+setInterval(() => { if (!document.hidden) relever(); }, 2000);
+</script>
+</body>
+</html>

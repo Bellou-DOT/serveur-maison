@@ -1,0 +1,12 @@
+[Unit]
+Description=Pare-feu : outils d'admin réservés aux appareils admin et au VPN
+After=network-pre.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f /etc/serveur-maison-admin.nft
+ExecStop=/usr/sbin/nft delete table inet serveur_maison_admin
+
+[Install]
+WantedBy=multi-user.target

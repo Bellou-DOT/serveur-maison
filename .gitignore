@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+# réglages et secrets locaux : jamais dans le dépôt
+serveur-maison.conf
+*.conf.local
+ip.txt
+adresse.txt

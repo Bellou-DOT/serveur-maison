@@ -1,0 +1,16 @@
+[Unit]
+Description=Panneau des serveurs de jeu (VPN : http://10.8.0.1:8765, maison : appareils admin)
+After=wg-quick@wg0.service network-online.target
+Requires=wg-quick@wg0.service
+
+[Service]
+User=@UTILISATEUR@
+EnvironmentFile=/etc/serveur-maison.conf
+Environment=CLE_SSH=@ACCUEIL@/.ssh/panneau
+WorkingDirectory=@ACCUEIL@/panneau-web/panneau
+ExecStart=/usr/bin/node panneau.mjs --sans-navigateur --ecoute=10.8.0.1 --ecoute=@IP@
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

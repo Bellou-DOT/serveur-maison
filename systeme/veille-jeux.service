@@ -1,0 +1,12 @@
+[Unit]
+Description=Veille des serveurs de jeu (arrêt après 5 h sans joueur, réveil à la connexion)
+After=network-online.target
+
+[Service]
+User=@UTILISATEUR@
+ExecStart=/usr/bin/python3 -u @ACCUEIL@/outils/veille-jeux.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

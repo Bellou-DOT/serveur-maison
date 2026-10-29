@@ -1,0 +1,9 @@
+name: serveur-maison/whitelist
+description: "Ne jamais bloquer la maison, le VPN, Docker ni le serveur lui-même"
+whitelist:
+  reason: "réseau de la maison / VPN"
+  cidr:
+    - "@RESEAU@"
+    - "10.8.0.0/24"
+    - "172.16.0.0/12"
+    - "127.0.0.0/8"

@@ -1,0 +1,16 @@
+[Unit]
+Description=@APP@ (interface réservée à la maison et au VPN)
+After=network-online.target
+
+[Service]
+User=@UTILISATEUR@
+Group=jellyfin
+UMask=0002
+Type=simple
+ExecStart=/opt/@APP@/@APP@ -nobrowser -data=/var/lib/@app@
+TimeoutStopSec=20
+KillMode=process
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

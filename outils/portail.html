@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0b1e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="{{NOM}}">
+<title>{{NOM}}</title>
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
+<style>
+  :root {
+    --nuit:#0d0b1e; --texte:#f1efff; --doux:#a9a3c9; --verre:rgba(255,255,255,.06); --verre2:rgba(255,255,255,.1);
+    --bord:rgba(255,255,255,.1); --violet:#a78bfa; --rose:#f472b6; --cyan:#22d3ee; --vert:#34d399; --ambre:#fbbf24; --rouge:#fb7185;
+    --rayon:20px;
+  }
+  * { box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; }
+  body { margin:0; min-height:100vh; color:var(--texte); background:var(--nuit);
+    font:16px/1.45 ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x:hidden; }
+  /* Aurore en arrière-plan */
+  .aurore { position:fixed; inset:-20vh -20vw; z-index:-1; filter:blur(70px); opacity:.55; pointer-events:none;
+    background:
+      radial-gradient(40% 35% at 20% 15%, #7c3aed 0%, transparent 70%),
+      radial-gradient(35% 30% at 85% 10%, #db2777 0%, transparent 70%),
+      radial-gradient(45% 40% at 70% 85%, #0891b2 0%, transparent 70%),
+      radial-gradient(30% 30% at 10% 90%, #4f46e5 0%, transparent 70%);
+    animation:flotte 24s ease-in-out infinite alternate; }
+  @keyframes flotte { to { transform:translate3d(3vw,-2vh,0) rotate(6deg) scale(1.05); } }
+  main { max-width:1040px; margin:0 auto; padding:max(28px, env(safe-area-inset-top)) 16px 48px; }
+
+  header { display:flex; align-items:center; gap:14px; margin-bottom:22px; }
+  .logo { width:54px; height:54px; border-radius:17px; display:grid; place-items:center; font-size:28px;
+    background:linear-gradient(135deg, var(--violet), var(--rose) 55%, var(--ambre)); box-shadow:0 10px 30px -8px #db277799; }
+  h1 { margin:0; font-size:28px; letter-spacing:-.03em;
+    background:linear-gradient(90deg, #fff, #d8ccff); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  header p { margin:0; color:var(--doux); font-size:14px; }
+
+  /* Recherche */
+  .recherche { position:relative; margin-bottom:8px; }
+  .recherche input { width:100%; padding:18px 52px 18px 54px; border-radius:999px; border:1px solid var(--bord);
+    background:rgba(255,255,255,.08); color:var(--texte); font:inherit; font-size:17px; outline:none;
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); transition:border-color .2s, box-shadow .2s, background .2s; }
+  .recherche input::placeholder { color:#b9b3d8; }
+  .recherche input::-webkit-search-cancel-button { display:none; }
+  .recherche input:focus { border-color:var(--violet); background:rgba(255,255,255,.11); box-shadow:0 0 0 5px #a78bfa2e; }
+  .recherche .loupe { position:absolute; left:20px; top:50%; transform:translateY(-50%); font-size:19px; opacity:.8; }
+  .recherche .effacer { position:absolute; right:12px; top:50%; transform:translateY(-50%); width:34px; height:34px; border-radius:50%;
+    border:0; background:var(--verre2); color:var(--texte); font-size:15px; cursor:pointer; }
+  .info { color:var(--doux); font-size:14px; min-height:20px; margin:6px 6px 14px; }
+
+  .nouveautes { display:grid; grid-auto-flow:column; grid-auto-columns:150px; gap:14px; overflow-x:auto; padding:2px 2px 10px;
+    scroll-snap-type:x mandatory; scrollbar-width:thin; margin-bottom:8px; }
+  .nouveautes .film { scroll-snap-align:start; }
+  .resultats { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:16px; margin-bottom:12px; }
+  .film { position:relative; border-radius:16px; overflow:hidden; background:var(--verre); border:1px solid var(--bord);
+    animation:apparait .35s ease both; display:flex; flex-direction:column; }
+  @keyframes apparait { from { opacity:0; transform:translateY(8px) scale(.98); } }
+  .film .affiche { aspect-ratio:2/3; background:linear-gradient(135deg, #2a2350, #1b2a44); display:grid; place-items:center;
+    font-size:40px; overflow:hidden; }
+  .film img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .4s ease; }
+  .film:hover img { transform:scale(1.04); }
+  .film .pastille { position:absolute; top:10px; left:10px; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); background:#0d0b1eb3; }
+  .pastille.dispo { color:var(--vert); } .pastille.demande { color:var(--ambre); } .pastille.partiel { color:var(--cyan); }
+  .film .corps { padding:10px 12px 12px; display:flex; flex-direction:column; gap:8px; flex:1; }
+  .film b { font-size:15px; line-height:1.25; }
+  .film small { color:var(--doux); font-size:13px; }
+  .film button, .film a.btn { margin-top:auto; border:0; border-radius:12px; padding:10px; font:inherit; font-weight:700; font-size:14px;
+    cursor:pointer; text-align:center; text-decoration:none; color:#1b1036; transition:transform .15s, filter .15s; }
+  .film button:hover, .film a.btn:hover { transform:translateY(-1px); filter:brightness(1.08); }
+  .btn-demander { background:linear-gradient(135deg, var(--violet), var(--rose)); }
+  .btn-regarder { background:linear-gradient(135deg, var(--vert), var(--cyan)); }
+  .film button:disabled { background:var(--verre2); color:var(--doux); cursor:default; transform:none; }
+
+  h2 { font-size:12px; text-transform:uppercase; letter-spacing:.14em; color:var(--doux); margin:28px 4px 12px; font-weight:700; }
+  .grille { display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:12px; }
+  a.tuile { --c:var(--violet); display:flex; gap:13px; align-items:center; padding:14px; border-radius:var(--rayon);
+    background:var(--verre); border:1px solid var(--bord); color:inherit; text-decoration:none;
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); transition:transform .2s, border-color .2s, background .2s, box-shadow .2s; }
+  a.tuile:hover, a.tuile:focus-visible { transform:translateY(-2px); border-color:color-mix(in srgb, var(--c) 60%, transparent);
+    background:var(--verre2); box-shadow:0 12px 30px -14px var(--c); outline:none; }
+  .ico { width:44px; height:44px; flex:none; border-radius:14px; display:grid; place-items:center; font-size:22px;
+    background:color-mix(in srgb, var(--c) 22%, transparent); }
+  .tuile b { display:block; font-size:15px; } .tuile small { color:var(--doux); font-size:13px; }
+  .point { width:9px; height:9px; border-radius:50%; background:#ffffff30; margin-left:auto; flex:none; }
+  .point.ok { background:var(--vert); box-shadow:0 0 10px var(--vert); } .point.ko { background:var(--rouge); }
+  footer { margin-top:34px; color:var(--doux); font-size:13px; text-align:center; }
+  #toast { position:fixed; left:50%; bottom:max(22px, env(safe-area-inset-bottom)); transform:translate(-50%, 140%); padding:12px 18px;
+    border-radius:14px; background:#1d1838f2; border:1px solid var(--bord); transition:transform .3s ease; max-width:92vw; }
+  #toast.vu { transform:translate(-50%, 0); }
+  .dl-tete { display:flex; align-items:center; gap:10px; margin:28px 4px 12px; flex-wrap:wrap; }
+  .replier { flex:1; min-width:0; display:flex; align-items:center; gap:8px; border:0; background:none; padding:4px 0; cursor:pointer;
+    color:var(--doux); font:inherit; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.14em; text-align:left; }
+  .replier .fleche { display:inline-block; transition:transform .2s; font-size:14px; }
+  .replier[aria-expanded="false"] .fleche { transform:rotate(-90deg); }
+  .replier .resume { text-transform:none; letter-spacing:0; font-weight:600; color:var(--texte); opacity:.75; }
+  .tout { border:0; border-radius:12px; padding:8px 13px; font:inherit; font-size:13px; font-weight:700; cursor:pointer;
+    color:var(--texte); background:var(--verre2); }
+  .tout.reprendre { background:linear-gradient(135deg, var(--vert), var(--cyan)); color:#062018; }
+  .dl-liste { display:grid; gap:10px; }
+  .dl { display:flex; align-items:center; gap:14px; padding:12px 14px; border-radius:16px; background:var(--verre); border:1px solid var(--bord); }
+  .dl .txt { flex:1; min-width:0; }
+  .dl b { display:block; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dl small { color:var(--doux); font-size:12.5px; }
+  .jauge { height:7px; border-radius:99px; background:#ffffff1a; overflow:hidden; margin:7px 0 5px; }
+  .jauge i { display:block; height:100%; border-radius:99px; background:linear-gradient(90deg, var(--cyan), var(--violet)); transition:width .6s ease; }
+  .dl.en-pause .jauge i { background:#ffffff55; }
+  .dl button { flex:none; border:0; border-radius:12px; padding:9px 13px; font:inherit; font-weight:700; font-size:14px; cursor:pointer;
+    color:var(--texte); background:var(--verre2); }
+  .dl button.annuler { padding:9px 12px; color:var(--rouge); }
+  .dl button.annuler:hover { background:#fb718533; }
+  .dl button.reprendre { background:linear-gradient(135deg, var(--vert), var(--cyan)); color:#062018; }
+  /* Vue « service » : barre fixe en haut, service affiché dessous dans la même fenêtre */
+  #barre { position:fixed; inset:0 0 auto 0; height:calc(52px + env(safe-area-inset-top)); padding:env(safe-area-inset-top) 10px 0;
+    display:flex; align-items:center; gap:10px; z-index:10; background:#0d0b1ee6; border-bottom:1px solid var(--bord);
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); }
+  #barre button, #barre a { border:0; border-radius:12px; padding:8px 12px; font:inherit; font-size:14px; font-weight:700; cursor:pointer;
+    color:var(--texte); background:var(--verre2); text-decoration:none; white-space:nowrap; }
+  #retour { background:linear-gradient(135deg, var(--violet), var(--rose)) !important; color:#1b1036 !important; }
+  #barre .titre { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--doux); font-size:14px; }
+  #services iframe { position:fixed; left:0; right:0; bottom:0; top:calc(52px + env(safe-area-inset-top)); width:100%;
+    height:calc(100% - 52px - env(safe-area-inset-top)); border:0; background:#101010; }
+  body.dans-service { overflow:hidden; }
+  body.dans-service main, body.dans-service .aurore { display:none; }
+  [hidden] { display:none !important; }
+  body.invite .admin { display:none !important; } /* portail invité : uniquement regarder et demander */
+  @media (prefers-reduced-motion: reduce) { *, .aurore { animation:none !important; transition:none !important; } }
+  @media (max-width:520px) { .resultats { grid-template-columns:repeat(2, 1fr); gap:12px; } h1 { font-size:24px; } }
+</style>
+</head>
+<body>
+<div class="aurore" aria-hidden="true"></div>
+<main>
+  <header><div class="logo" aria-hidden="true">🏠</div><div><h1>{{NOM}}</h1><p id="salut">Bonsoir !</p></div></header>
+
+  <form class="recherche" role="search" onsubmit="event.preventDefault()">
+    <span class="loupe" aria-hidden="true">🔎</span>
+    <input id="q" type="search" placeholder="Un film, une série, un animé…" autocomplete="off" enterkeyhint="search" aria-label="Rechercher un film ou une série">
+    <button type="button" class="effacer" id="effacer" aria-label="Effacer" hidden>✕</button>
+  </form>
+  <div class="info" id="info" aria-live="polite"></div>
+  <div class="resultats" id="resultats"></div>
+  <section id="zoneNouveautes" hidden aria-labelledby="t-nouv"><h2 id="t-nouv">🆕 Nouveautés</h2><div class="nouveautes" id="nouveautes"></div></section>
+
+  <section id="zoneDl" class="admin" hidden>
+    <div class="dl-tete">
+      <button type="button" id="replier" class="replier" aria-expanded="true" aria-controls="dl">
+        <span class="fleche" aria-hidden="true">▾</span> Téléchargements en cours <span id="dlResume" class="resume"></span>
+      </button>
+      <button type="button" id="toutPause" class="tout">⏸ Tout mettre en pause</button>
+    </div>
+    <div id="dl" class="dl-liste"></div>
+  </section>
+
+  <h2>Films et séries</h2>
+  <div class="grille">
+    <a class="tuile" style="--c:var(--rose)" data-port="5055" data-svc="docker"><span class="ico">🍿</span><span><b>Seerr</b><small>Mes demandes</small></span><i class="point"></i></a>
+    <a class="tuile" style="--c:var(--violet)" data-port="8096" data-svc="jellyfin"><span class="ico">🎬</span><span><b>Jellyfin</b><small>Regarder</small></span><i class="point"></i></a>
+    <a class="tuile admin" style="--c:var(--cyan)" data-port="2283" data-svc="docker"><span class="ico">📸</span><span><b>Photos</b><small>Immich</small></span><i class="point"></i></a>
+  </div>
+
+  <h2 class="admin">Coulisses des téléchargements</h2>
+  <div class="grille admin">
+    <a class="tuile" style="--c:var(--ambre)" data-port="7878" data-svc="radarr"><span class="ico">🎞️</span><span><b>Radarr</b><small>Films</small></span><i class="point"></i></a>
+    <a class="tuile" style="--c:var(--cyan)" data-port="8989" data-svc="sonarr"><span class="ico">📺</span><span><b>Sonarr</b><small>Séries et animés</small></span><i class="point"></i></a>
+    <a class="tuile" style="--c:var(--vert)" data-port="9696" data-svc="prowlarr"><span class="ico">🔎</span><span><b>Prowlarr</b><small>Sources</small></span><i class="point"></i></a>
+    <a class="tuile" style="--c:var(--rouge)" data-port="9091" data-chemin="/transmission/web/" data-svc="transmission-daemon"><span class="ico">⬇️</span><span><b>Transmission</b><small>Téléchargements</small></span><i class="point"></i></a>
+  </div>
+
+  <h2>Jeux et maison</h2>
+  <div class="grille">
+    <a class="tuile" style="--c:var(--vert)" data-port="8080" data-svc="minecraft"><span class="ico">🗺️</span><span><b>Carte Minecraft</b><small>Monde en direct</small></span><i class="point"></i></a>
+    <a class="tuile admin" style="--c:var(--ambre)" data-port="8765" data-svc="panneau"><span class="ico">🧱</span><span><b>Panneau des jeux</b><small>Minecraft et Palworld</small></span></a>
+    <a class="tuile admin" style="--c:var(--cyan)" data-vpn="3000"><span class="ico">🛡️</span><span><b>Bloqueur de pubs</b><small>AdGuard · VPN</small></span></a>
+    <a class="tuile admin" style="--c:var(--rose)" href="/serveur"><span class="ico">📊</span><span><b>Serveur en direct</b><small>Température, processeur, disques</small></span></a>
+    <a class="tuile admin" id="tuilePc" href="#pc" style="--c:var(--violet)"><span class="ico">💻</span><span><b>Mon PC</b><small id="pcEtat">Allumer à distance</small></span><i class="point"></i></a>
+  </div>
+
+  <footer>{{NOM}} · accessible à la maison et par le VPN</footer>
+</main>
+<nav id="barre" hidden aria-label="Navigation">
+  <button type="button" id="retour">🏠 {{NOM}}</button>
+  <span class="titre" id="titreService"></span>
+  <a id="aPart" target="_blank" rel="noopener" title="Ouvrir dans une fenêtre à part">↗</a>
+</nav>
+<div id="services"></div>
+<div id="toast" role="status"></div>
+<script>
+const $ = (id) => document.getElementById(id);
+const hote = location.hostname;
+const lien = (port, chemin = '/') => 'http://' + hote + ':' + port + chemin;
+for (const a of document.querySelectorAll('[data-port]')) a.href = lien(a.dataset.port, a.dataset.chemin);
+for (const a of document.querySelectorAll('[data-vpn]')) a.href = 'http://10.8.0.1:' + a.dataset.vpn + '/';
+// Transmission refuse d'être affiché dans une autre page : le portail le relaie depuis sa propre adresse.
+document.querySelector('[data-port="9091"]').href = '/transmission/web/';
+
+// ---------- Une seule fenêtre : chaque service s'affiche sous la barre, le portail reste à un clic ----------
+const NOM = document.title;
+const cadres = {}; // un cadre par service, gardé en mémoire : on retrouve le service là où on l'avait laissé
+function afficher(cle) {
+  const actif = cle && cadres[cle];
+  document.body.classList.toggle('dans-service', !!actif);
+  $('barre').hidden = !actif;
+  for (const [k, f] of Object.entries(cadres)) f.hidden = k !== cle;
+  if (actif) { $('titreService').textContent = actif.dataset.nom; $('aPart').href = actif.src; }
+  else document.title = NOM;
+}
+function ouvrir(url, nom) {
+  const cle = nom.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  if (!cadres[cle]) {
+    cadres[cle] = el('iframe', { src: url, title: nom, allow: 'fullscreen; autoplay; picture-in-picture; clipboard-write; encrypted-media' });
+    cadres[cle].dataset.nom = nom;
+    $('services').append(cadres[cle]);
+  } else if (cadres[cle].src !== url) cadres[cle].src = url;
+  history.pushState({ cle }, '', '#' + cle);
+  afficher(cle);
+}
+for (const a of document.querySelectorAll('a.tuile')) {
+  if (a.id === 'tuilePc') continue;
+  a.addEventListener('click', (e) => {
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return; // Ctrl+clic : fenêtre à part
+    e.preventDefault();
+    ouvrir(a.href, a.querySelector('b').textContent);
+  });
+}
+// Retour direct à l'accueil : les pages visitées dans un service (Seerr…) s'ajoutent à l'historique, « précédent » n'y suffirait pas
+$('retour').onclick = () => { afficher(null); history.pushState(null, '', location.pathname); };
+addEventListener('popstate', (e) => afficher(e.state && e.state.cle));
+history.replaceState(null, '', location.pathname);
+const h = new Date().getHours();
+$('salut').textContent = (h < 6 ? 'Bonne nuit' : h < 18 ? 'Bonjour' : 'Bonsoir') + ' ! Qu\'est-ce qu\'on regarde ?';
+
+fetch('/etat').then((r) => r.json()).then((etat) => {
+  for (const a of document.querySelectorAll('[data-svc]')) {
+    const ok = etat[a.dataset.svc] === 'active';
+    const p = a.querySelector('.point');
+    p.classList.add(ok ? 'ok' : 'ko');
+    p.title = ok ? 'En marche' : 'Arrêté';
+  }
+}).catch(() => {});
+
+// ---------- Mon PC : allumé ou en veille, réveil à distance ----------
+async function etatPc() {
+  const r = await fetch('/pc').then((x) => x.json()).catch(() => null);
+  if (!r) return;
+  const p = $('tuilePc').querySelector('.point');
+  p.className = 'point ' + (r.allume ? 'ok' : 'ko');
+  $('pcEtat').textContent = r.allume ? 'Allumé · touche pour le mettre en veille' : 'En veille · touche pour l’allumer';
+  return r.allume;
+}
+$('tuilePc').onclick = async (e) => {
+  e.preventDefault();
+  if (await etatPc()) {
+    if (!confirm('Mettre ton PC en veille ?')) return;
+    const r = await fetch('/pc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"action":"veille"}' }).catch(() => null);
+    if (!r || !r.ok) return toast('Impossible de demander la mise en veille.');
+    $('pcEtat').textContent = 'Mise en veille…';
+    toast('Ton PC va se mettre en veille (dans les 10 secondes).');
+    for (let i = 0; i < 8; i++) {
+      await new Promise((ok) => setTimeout(ok, 5000));
+      if (!(await etatPc())) return toast('Ton PC dort 💤');
+    }
+    return toast('Le PC ne s’est pas endormi : l’agent du PC ne tourne peut-être pas.');
+  }
+  const rep = await fetch('/pc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => null);
+  if (!rep || !rep.ok) return toast('Impossible d’envoyer le signal de réveil.');
+  $('pcEtat').textContent = 'Réveil en cours…';
+  toast('Signal envoyé : ton PC se réveille (environ 20 secondes).');
+  for (let i = 0; i < 12; i++) {
+    await new Promise((ok) => setTimeout(ok, 5000));
+    if (await etatPc()) return toast('Ton PC est allumé ✅');
+  }
+  toast('Le PC ne répond pas : il était peut-être éteint et pas en veille.');
+};
+if (!document.body.classList.contains('invite')) etatPc();
+
+function toast(t) {
+  $('toast').textContent = t; $('toast').classList.add('vu');
+  clearTimeout(toast.m); toast.m = setTimeout(() => $('toast').classList.remove('vu'), 3500);
+}
+function el(tag, props = {}, ...enfants) {
+  const e = Object.assign(document.createElement(tag), props);
+  e.append(...enfants.filter((x) => x != null));
+  return e;
+}
+const PASTILLES = { dispo: '✓ Disponible', demande: '⏳ Demandé', partiel: '◐ En partie' };
+
+function carte(r) {
+  const affiche = el('div', { className: 'affiche' }, r.affiche
+    ? el('img', { src: 'https://image.tmdb.org/t/p/w342' + r.affiche, alt: '', loading: 'lazy' }) : (r.type === 'tv' ? '📺' : '🎬'));
+  let action;
+  if (r.etat === 'dispo' && r.jellyfin) {
+    action = el('a', { className: 'btn btn-regarder', textContent: '▶ Regarder', href: lien(8096, '/web/#/details?id=' + r.jellyfin) });
+    action.onclick = (e) => { e.preventDefault(); ouvrir(action.href, 'Jellyfin'); };
+  } else if (r.etat === 'demande') {
+    action = el('button', { textContent: 'Demandé', disabled: true });
+  } else if (INVITE) {
+    // Invité : la demande se fait dans Seerr avec son propre compte (validée selon ses droits)
+    action = el('a', { className: 'btn btn-demander', textContent: '+ Demander', href: lien(5055, '/' + r.type + '/' + r.id) });
+    action.onclick = (e) => { e.preventDefault(); ouvrir(action.href, 'Seerr'); };
+  } else {
+    action = el('button', { className: 'btn-demander', textContent: r.etat === 'partiel' ? '+ Compléter' : '+ Demander' });
+    action.onclick = async () => {
+      action.disabled = true; action.textContent = '…';
+      try {
+        const rep = await fetch('/demander', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: r.type, id: r.id }) });
+        const d = await rep.json();
+        if (!rep.ok) throw new Error(d.erreur || 'refusé');
+        action.textContent = 'Demandé ✓';
+        toast('« ' + r.titre + ' » est demandé. Il arrivera dans Jellyfin dès qu\'il est téléchargé.');
+      } catch (e) {
+        action.disabled = false; action.textContent = '+ Demander';
+        toast('Impossible de demander « ' + r.titre + ' » : ' + e.message);
+      }
+    };
+  }
+  return el('article', { className: 'film', title: r.resume },
+    affiche, PASTILLES[r.etat] ? el('span', { className: 'pastille ' + r.etat, textContent: PASTILLES[r.etat] }) : null,
+    el('div', { className: 'corps' }, el('b', { textContent: r.titre }),
+      el('small', { textContent: (r.type === 'tv' ? 'Série' : 'Film') + (r.annee ? ' · ' + r.annee : '') }), action));
+}
+
+// ---------- Nouveautés : les derniers films et séries arrivés, prêts à regarder ----------
+fetch('/nouveautes').then((r) => r.json()).then((liste) => {
+  if (!Array.isArray(liste) || !liste.length) return;
+  $('nouveautes').replaceChildren(...liste.map(carte));
+  $('zoneNouveautes').hidden = false;
+}).catch(() => {});
+
+// ---------- Téléchargements en cours (actualisés toutes les 5 s quand l'accueil est affiché) ----------
+const taille = (o) => o >= 1024 ** 3 ? (o / 1024 ** 3).toFixed(1).replace('.', ',') + ' Go' : Math.round(o / 1024 ** 2) + ' Mo';
+const duree = (s) => s < 0 ? '' : s < 60 ? 'moins d\'1 min' : s < 3600 ? Math.round(s / 60) + ' min' : Math.floor(s / 3600) + ' h ' + Math.round(s % 3600 / 60) + ' min';
+function ligneDl(t) {
+  let detail, bouton = null;
+  if (t.attente) detail = '⚠️ Plus de 10 Go : réponds à la notification sur ton téléphone';
+  else if (t.erreur) detail = '❌ ' + t.erreur;
+  else if (t.pause) detail = 'En pause · ' + t.pct.toString().replace('.', ',') + ' % de ' + taille(t.taille);
+  else detail = t.pct.toString().replace('.', ',') + ' % de ' + taille(t.taille) + (t.vitesse ? ' · ' + taille(t.vitesse) + '/s' : '') + (t.eta > 0 ? ' · reste ' + duree(t.eta) : '');
+  if (!t.attente) {
+    bouton = el('button', { type: 'button', className: t.pause ? 'reprendre' : '', textContent: t.pause ? '▶ Reprendre' : '⏸ Pause',
+      ariaLabel: (t.pause ? 'Reprendre ' : 'Mettre en pause ') + t.nom });
+    bouton.onclick = async () => {
+      bouton.disabled = true;
+      const rep = await fetch('/telechargement', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: t.id, action: t.pause ? 'reprendre' : 'pause' }) }).catch(() => null);
+      if (!rep || !rep.ok) toast('Impossible de changer ce téléchargement.');
+      chargerDl();
+    };
+  }
+  const annuler = el('button', { type: 'button', className: 'annuler', textContent: '✕', title: 'Annuler ce téléchargement', ariaLabel: 'Annuler ' + t.nom });
+  annuler.onclick = async () => {
+    if (!confirm('Annuler « ' + t.nom + ' » ?' + String.fromCharCode(10, 10) + 'Le téléchargement et ses fichiers sont supprimés, et il ne sera pas relancé.')) return;
+    annuler.disabled = true;
+    const rep = await fetch('/telechargement', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: t.id, action: 'annuler' }) }).catch(() => null);
+    toast(rep && rep.ok ? 'Téléchargement annulé.' : "Impossible d'annuler ce téléchargement.");
+    chargerDl();
+  };
+  return el('div', { className: 'dl' + (t.pause ? ' en-pause' : '') },
+    el('div', { className: 'txt' }, el('b', { textContent: t.nom, title: t.nom }),
+      el('div', { className: 'jauge' }, el('i', { style: 'width:' + t.pct + '%' })), el('small', { textContent: detail })), bouton, annuler);
+}
+let dlListe = [];
+async function chargerDl() {
+  try {
+    const liste = await (await fetch('/telechargements')).json();
+    if (!Array.isArray(liste)) return;
+    dlListe = liste;
+    $('zoneDl').hidden = !liste.length;
+    $('dl').replaceChildren(...liste.map(ligneDl));
+    // Résumé visible même replié, et bouton global : « tout reprendre » quand rien ne tourne
+    const actifs = liste.filter((t) => !t.pause).length;
+    const vitesse = liste.reduce((s, t) => s + (t.pause ? 0 : t.vitesse), 0);
+    $('dlResume').textContent = '· ' + liste.length + (actifs ? ' (' + actifs + ' actif' + (actifs > 1 ? 's' : '') + (vitesse ? ', ' + taille(vitesse) + '/s' : '') + ')' : ' en pause');
+    $('toutPause').textContent = actifs ? '⏸ Tout mettre en pause' : '▶ Tout reprendre';
+    $('toutPause').className = 'tout' + (actifs ? '' : ' reprendre');
+  } catch { $('zoneDl').hidden = true; }
+}
+$('toutPause').onclick = async () => {
+  const action = dlListe.some((t) => !t.pause) ? 'pause' : 'reprendre';
+  $('toutPause').disabled = true;
+  const rep = await fetch('/telechargement', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tous: true, action }) }).catch(() => null);
+  $('toutPause').disabled = false;
+  toast(rep && rep.ok ? (action === 'pause' ? 'Tous les téléchargements sont en pause.' : 'Téléchargements relancés.') : 'Impossible de changer les téléchargements.');
+  chargerDl();
+};
+// Liste repliable, mémorisée sur cet appareil
+function replier(ferme) {
+  $('dl').hidden = ferme;
+  $('replier').setAttribute('aria-expanded', String(!ferme));
+  try { localStorage.setItem('dlReplie', ferme ? '1' : ''); } catch {}
+}
+$('replier').onclick = () => replier(!$('dl').hidden);
+try { replier(localStorage.getItem('dlReplie') === '1'); } catch {}
+const INVITE = document.body.classList.contains('invite');
+if (!INVITE) {
+  chargerDl();
+  setInterval(() => { if (!document.body.classList.contains('dans-service') && !document.hidden) chargerDl(); }, 5000);
+}
+
+let attente, numero = 0;
+async function chercher() {
+  const q = $('q').value.trim();
+  $('effacer').hidden = !q;
+  if (q.length < 2) { $('resultats').replaceChildren(); $('info').textContent = ''; return; }
+  const n = ++numero;
+  $('info').textContent = 'Recherche…';
+  try {
+    const liste = await (await fetch('/recherche?q=' + encodeURIComponent(q))).json();
+    if (n !== numero) return; // une frappe plus récente a pris le relais
+    $('info').textContent = liste.length ? '' : 'Rien trouvé pour « ' + q + ' ».';
+    $('resultats').replaceChildren(...liste.map(carte));
+  } catch {
+    if (n === numero) $('info').textContent = 'La recherche ne répond pas (Seerr est-il démarré ?).';
+  }
+}
+$('q').addEventListener('input', () => { clearTimeout(attente); attente = setTimeout(chercher, 350); });
+$('effacer').onclick = () => { $('q').value = ''; chercher(); $('q').focus(); };
+</script>
+</body>
+</html>

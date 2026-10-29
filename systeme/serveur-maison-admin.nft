@@ -1,0 +1,23 @@
+# Outils d'administration réservés aux appareils admin (ADMINS_MAC), au VPN et au serveur lui-même.
+# Généré par installer.sh dans /etc/serveur-maison-admin.nft (le portail lit aussi cette liste d'adresses MAC).
+table inet serveur_maison_admin
+delete table inet serveur_maison_admin
+table inet serveur_maison_admin {
+	set admins_mac {
+		type ether_addr
+		@ELEMENTS@
+	}
+
+	chain entree {
+		type filter hook input priority -5; policy accept;
+		# Radarr, Sonarr, Prowlarr, Transmission, panneau des jeux, AdGuard
+		tcp dport { 7878, 8989, 9696, 9091, 8765, 3000 } jump outils_admin
+	}
+
+	chain outils_admin {
+		iifname { "lo", "wg0", "docker0" } accept   # le serveur, le VPN, Seerr (Docker)
+		ip saddr 172.16.0.0/12 accept
+		iifname "@INTERFACE@" ether saddr @admins_mac accept
+		counter drop
+	}
+}

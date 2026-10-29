@@ -1,0 +1,16 @@
+[Unit]
+Description=Serveur Palworld
+After=network-online.target
+Wants=network-online.target
+# Conflits dans les deux sens : 16 Go de mémoire ne suffisent pas pour les deux jeux.
+Conflicts=minecraft.service
+
+[Service]
+User=@UTILISATEUR@
+WorkingDirectory=@ACCUEIL@/palworld
+ExecStart=@ACCUEIL@/palworld/PalServer.sh -port=8211 -useperfthreads -NoAsyncLoadingThread -UseMultithreadForDS
+Restart=on-failure
+RestartSec=20
+# SIGINT : arrêt propre d'Unreal Engine (partie enregistrée)
+KillSignal=SIGINT
+TimeoutStopSec=90

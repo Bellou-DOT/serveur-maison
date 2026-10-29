@@ -1,0 +1,19 @@
+[Unit]
+Description=Serveur Modern Warfare 2 (IW4x, sous Wine)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=@UTILISATEUR@
+WorkingDirectory=/srv/iw4x
+Environment=WINEPREFIX=@ACCUEIL@/.wine-iw4x WINEDEBUG=-all WINEARCH=win64
+# Mise à jour d'IW4x à chaque démarrage (ignorée si le site ne répond pas)
+ExecStartPre=-/srv/iw4x/iw4x-launcher --arch x86 --skip-launch --no-shortcuts --no-connect-protocol --no-self-update
+ExecStart=/usr/bin/wine iw4x.exe -dedicated -stdout +set fs_game "" +set sv_lanonly 0 +set net_port 28960 +exec server.cfg +exec panneau.cfg +set logfile 1 +set party_enable 0 +map_rotate
+ExecStopPost=-/usr/bin/wineserver -k
+Restart=on-failure
+RestartSec=20
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target
