@@ -3,17 +3,16 @@
 
 # ---------- Noms ----------
 NOM_PORTAIL="MonServ"              # titre du portail web et des notifications
-NOM_JEUX="Serveur de Moi"          # nom affiché des serveurs Minecraft, Palworld et MW2
 HOTE="monserv"                     # le portail répond sur http://monserv (par le DNS du VPN)
 
 # ---------- Réseau de la maison ----------
 IP_SERVEUR="192.168.1.20"          # adresse fixe du serveur : à réserver dans la box (bail DHCP statique)
 RESEAU_MAISON="192.168.1.0/24"
 INTERFACE="wlo1"                   # carte réseau du serveur (commande : ip -br link)
-DOMAINE=""                         # adresse publique pour le VPN et les amis (ex. moi.duckdns.org) ; vide = IP publique
+DOMAINE=""                         # adresse publique pour le VPN (ex. moi.duckdns.org) ; vide = IP publique
 DUCKDNS_JETON=""                   # jeton DuckDNS si DOMAINE est en .duckdns.org (mise à jour de l'IP toutes les 5 min)
 
-# Appareils de la maison qui ont accès aux outils d'admin (Radarr, Sonarr, Transmission, panneau des jeux…)
+# Appareils de la maison qui ont accès aux outils d'admin (Radarr, Sonarr, Prowlarr, Transmission, AdGuard)
 # sans passer par le VPN : leurs adresses MAC, séparées par des espaces. Le VPN y a toujours accès.
 ADMINS_MAC=""
 
@@ -23,13 +22,11 @@ PC_IP=""
 
 # ---------- Médias ----------
 MEDIAS_BRUT="/srv/medias-brut"     # où Radarr et Sonarr rangent les fichiers (peut être un disque externe)
-MEDIAS="/srv/medias"               # ce que lit Jellyfin : liens vers MEDIAS_BRUT (voir outils/t7-vitrine.py)
+MEDIAS="/srv/medias"               # ce que lit Jellyfin : liens vers MEDIAS_BRUT (voir outils/vitrine.py)
 DOSSIER_PRIVE=""                   # dossier de films à part (bibliothèque Jellyfin d'un seul compte) ; vide = aucun
 
 # ---------- Ce qu'il faut installer (oui / non) ----------
 AVEC_MEDIAS="oui"                  # Jellyfin, Radarr, Sonarr, Prowlarr, Seerr, Transmission, partage Samba
 AVEC_PHOTOS="oui"                  # Immich (sauvegarde des photos du téléphone)
-AVEC_MINECRAFT="oui"               # Paper + Geyser (joueurs console et téléphone)
-AVEC_PALWORLD="non"                # serveur dédié Palworld (16 Go de mémoire conseillés)
 AVEC_SECURITE="oui"                # CrowdSec : bloque les adresses qui attaquent le serveur
 FUSEAU="Europe/Paris"

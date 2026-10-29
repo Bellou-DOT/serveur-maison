@@ -4,23 +4,20 @@
 Pour chaque service : nouvelle version ? -> vérification d'impact -> installation -> contrôle -> notification.
 - Retenue (notification, rien d'installé) : changement de version majeure, ou notes de version qui annoncent
   des changements cassants (Immich). à regarder à la main.
-- Reportée (silencieusement, à l'heure suivante) : quelqu'un joue (Minecraft) ou regarde (Jellyfin).
+- Reportée (silencieusement, à l'heure suivante) : quelqu'un regarde un film (Jellyfin).
 - Si le service ne repart pas après la mise à jour : retour à l'ancienne version quand c'est possible, et alerte.
 Les mises à jour de sécurité d'Ubuntu restent gérées par unattended-upgrades.
 --test : vérifications sans réseau.  --verifier : affiche ce qui est disponible, sans rien installer.
 """
 import hashlib
-import importlib.util
 import json
 import os
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
 import time
 import urllib.request
-import zipfile
 from pathlib import Path
 
 sys.path.insert(0, os.path.expanduser('~/outils'))
@@ -28,7 +25,6 @@ import portail  # noqa: E402  (arr, arr_envoyer, notifier, ACCUEIL)
 
 ETAT = portail.ACCUEIL / '.surveillance' / 'maj-connues.json'
 UA = {'User-Agent': 'serveur-maison (mises a jour)'}
-MC = portail.ACCUEIL / 'mc'
 
 
 class Retenue(Exception):
@@ -70,94 +66,6 @@ def actif(service):
 
 def sudo(*cmd, **kw):
     return subprocess.run(['sudo', '-n', *cmd], check=True, capture_output=True, text=True, **kw)
-
-
-# ---------- Minecraft : Paper et Geyser (appliqués quand personne ne joue) ----------
-
-def veille_jeux():
-    spec = importlib.util.spec_from_file_location('veille', Path(__file__).with_name('veille-jeux.py'))
-    m = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(m)
-    return m
-
-
-def personne_sur_minecraft():
-    if not actif('minecraft'):
-        return True
-    if veille_jeux().mc_joueurs() != 0:
-        raise Reportee('des joueurs sont connectés')
-    return True
-
-
-def relancer_minecraft_et_verifier():
-    """Redémarre Minecraft s'il tournait ; vrai si le serveur répond de nouveau."""
-    if not actif('minecraft'):
-        return True
-    sudo('systemctl', 'restart', 'minecraft')
-    for _ in range(60):
-        time.sleep(5)
-        if veille_jeux().mc_joueurs() is not None:
-            return True
-    return False
-
-
-def paper_dispo():
-    journal = (MC / 'logs' / 'latest.log').read_text(errors='replace')
-    m = re.search(r'running Paper version (\S+?)-(\d+)-', journal)
-    if not m:
-        return None
-    version, build = m.group(1), int(m.group(2))
-    d = json_web(f'https://fill.papermc.io/v3/projects/paper/versions/{version}/builds/latest')
-    # le journal est périmé quand Minecraft dort : on compare aussi l'empreinte du jar installé
-    deja = hashlib.sha256((MC / 'server.jar').read_bytes()).hexdigest() == d['downloads']['server:default']['checksums']['sha256']
-    return f"{version}-{d['id']}" if d['id'] > build and d.get('channel') == 'STABLE' and not deja else None
-
-
-def paper_appliquer(v):
-    version, build = v.rsplit('-', 1)
-    personne_sur_minecraft()
-    d = json_web(f'https://fill.papermc.io/v3/projects/paper/versions/{version}/builds/{build}')['downloads']['server:default']
-    jar = MC / 'server.jar'
-    neuf = jar.with_name('server.jar.neuf')
-    telecharger(d['url'], d['checksums']['sha256'], neuf)
-    shutil.copy2(jar, jar.with_name('server.jar.avant'))
-    neuf.replace(jar)
-    if not relancer_minecraft_et_verifier():
-        shutil.copy2(jar.with_name('server.jar.avant'), jar)
-        relancer_minecraft_et_verifier()
-        raise Retenue('Minecraft ne redémarrait pas avec la nouvelle version : ancienne version remise')
-    return f'Minecraft (Paper) {version} build {build}'
-
-
-def plugin_version(jar):
-    return re.search(r'^version:\s*(\S+)', zipfile.ZipFile(jar).read('plugin.yml').decode(), re.M).group(1)
-
-
-def geyser_dispo():
-    jar = MC / 'plugins' / 'Geyser-Spigot.jar'
-    if not jar.exists():
-        return None
-    d = json_web('https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest')
-    return d['version'] if version_plus_recente(d['version'], plugin_version(jar)) else None
-
-
-def geyser_appliquer(v):
-    personne_sur_minecraft()
-    plugins = MC / 'plugins'
-    anciens = {}
-    for projet, nom in (('geyser', 'Geyser-Spigot.jar'), ('floodgate', 'floodgate-spigot.jar')):
-        d = json_web(f'https://download.geysermc.org/v2/projects/{projet}/versions/latest/builds/latest')['downloads']['spigot']
-        neuf = plugins / (nom + '.neuf')
-        telecharger(f'https://download.geysermc.org/v2/projects/{projet}/versions/latest/builds/latest/downloads/spigot',
-                    d['sha256'], neuf)
-        anciens[nom] = (plugins / nom).read_bytes()
-        neuf.replace(plugins / nom)
-    if not relancer_minecraft_et_verifier():
-        for nom, contenu in anciens.items():
-            (plugins / nom).write_bytes(contenu)
-        relancer_minecraft_et_verifier()
-        raise Retenue('Minecraft ne redémarrait pas avec le nouveau Geyser : ancienne version remise')
-    return f'Geyser {v} (+ Floodgate)'
 
 
 # ---------- Radarr, Sonarr, Prowlarr : leur propre mise à jour intégrée ----------
@@ -279,8 +187,6 @@ SERVICES = {
     'Radarr': (lambda: arr_dispo('radarr'), lambda v: arr_appliquer('radarr', v)),
     'Sonarr': (lambda: arr_dispo('sonarr'), lambda v: arr_appliquer('sonarr', v)),
     'Prowlarr': (lambda: arr_dispo('prowlarr'), lambda v: arr_appliquer('prowlarr', v)),
-    'Minecraft (Paper)': (paper_dispo, paper_appliquer),
-    'Geyser (joueurs console)': (geyser_dispo, geyser_appliquer),
 }
 
 
@@ -345,10 +251,10 @@ def test():
     assert version_plus_recente('v3.10.0', 'v3.9.9')  # comparaison numérique, pas alphabétique
     assert meme_majeure('6.5.0.1', '6.4.4.10685') and not meme_majeure('7.0.0', '6.4.4') and meme_majeure('v3.4.0', 'v3.3.5')
     assert meme_majeure('12.3.1', '12.3.0') and not meme_majeure('13.0.0', '12.3.0')
-    a = {'faites': ['Paper 1', 'Paper 1'], 'retenues': []}
+    a = {'faites': ['Radarr 1', 'Radarr 1'], 'retenues': []}
     assert resume_du_jour(a, None, '2026-10-29', 18) is None  # trop tôt
     assert resume_du_jour(a, '2026-10-29', '2026-10-29', 20) is None  # déjà envoyé
-    assert resume_du_jour(a, '2026-10-28', '2026-10-29', 19)[1].count('Paper 1') == 1  # doublons fusionnés
+    assert resume_du_jour(a, '2026-10-28', '2026-10-29', 19)[1].count('Radarr 1') == 1  # doublons fusionnés
     assert resume_du_jour({'faites': [], 'retenues': []}, None, '2026-10-29', 20) is None
     with tempfile.TemporaryDirectory() as t:
         f = Path(t) / 'x'

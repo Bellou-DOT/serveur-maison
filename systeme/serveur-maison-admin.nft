@@ -10,8 +10,8 @@ table inet serveur_maison_admin {
 
 	chain entree {
 		type filter hook input priority -5; policy accept;
-		# Radarr, Sonarr, Prowlarr, Transmission, panneau des jeux, AdGuard
-		tcp dport { 7878, 8989, 9696, 9091, 8765, 3000 } jump outils_admin
+		# Radarr, Sonarr, Prowlarr, Transmission, AdGuard
+		tcp dport { 7878, 8989, 9696, 9091, 3000 } jump outils_admin
 	}
 
 	chain outils_admin {

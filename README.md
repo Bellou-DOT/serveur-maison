@@ -1,7 +1,7 @@
 # serveur-maison
 
 Un vieux PC portable transformé en serveur pour toute la maison, piloté depuis un portail web et le téléphone.
-Tout est en français et prévu pour **Ubuntu 24.04** sur un PC dédié (8 Go de mémoire minimum, 16 Go conseillés pour les jeux).
+Tout est en français et prévu pour **Ubuntu 24.04** sur un PC dédié (8 Go de mémoire minimum).
 
 ## Ce qu'il y a dedans
 
@@ -10,9 +10,8 @@ Tout est en français et prévu pour **Ubuntu 24.04** sur un PC dédié (8 Go de
 | 🏠 **Portail** | Une page d'accueil (`http://IP-du-serveur`) avec une tuile par service, les nouveautés, les téléchargements en cours, l'état du serveur en direct, le réveil et la mise en veille du PC. Les appareils qui ne sont pas admin voient une version simplifiée. |
 | 🎬 **Films et séries** | Jellyfin pour regarder, Seerr pour demander un film, Radarr/Sonarr/Prowlarr pour aller le chercher, Transmission pour le télécharger. Un film supprimé dans Jellyfin est supprimé partout (fichier, Radarr, Seerr, téléchargement). Au-delà de 10 Go, le téléchargement attend ton accord par notification. |
 | 📸 **Photos** | Immich : sauvegarde automatique des photos du téléphone. |
-| 🎮 **Jeux** | Minecraft (Paper, + Geyser pour les consoles et téléphones), Palworld, Modern Warfare 2 (IW4x). Un panneau web pour changer de monde, gérer la liste blanche, les réglages, les joueurs. Les serveurs s'éteignent après 5 h sans joueur et se rallument tout seuls quand quelqu'un se connecte. |
 | 🔒 **Accès** | VPN WireGuard (QR code à scanner) pour tout utiliser depuis l'extérieur, AdGuard Home qui bloque les pubs sur le VPN, CrowdSec qui bloque les attaques. Les outils d'admin ne répondent qu'au VPN et aux appareils déclarés. |
-| 🔔 **Surveillance** | Notifications sur le téléphone (appli ntfy) : disque plein, surchauffe, disque en mauvaise santé, service en panne, coupure de courant, téléchargement fini. Mises à jour des services installées toutes seules après vérification, avec un seul résumé par jour. Sauvegarde chaque nuit des mondes et des réglages. |
+| 🔔 **Surveillance** | Notifications sur le téléphone (appli ntfy) : disque plein, surchauffe, disque en mauvaise santé, service en panne, coupure de courant, téléchargement fini. Mises à jour des services installées toutes seules après vérification, avec un seul résumé par jour. Sauvegarde des réglages chaque nuit. |
 
 ## Installation
 
@@ -28,7 +27,7 @@ Le fichier de réglages est commenté ligne par ligne (modèle : [config.exemple
 
 Avant de commencer :
 - **Réserve une adresse IP fixe** pour le serveur dans ta box (bail DHCP statique), et mets-la dans `IP_SERVEUR`.
-- **Ouvre les ports** dans la box vers le serveur : UDP 51820 (VPN), et pour les jeux TCP 25565 + UDP 19132 (Minecraft), UDP 8211 (Palworld), UDP 28960 (MW2).
+- **Ouvre les ports** dans la box vers le serveur : UDP 51820 (VPN), c'est tout.
 - Une **adresse fixe sur Internet** est conseillée (gratuite sur [duckdns.org](https://www.duckdns.org)) : `DOMAINE` et `DUCKDNS_JETON`.
 
 ## Après l'installation
@@ -57,10 +56,6 @@ Monte-le de façon permanente (ligne dans `/etc/fstab`, avec `nofail` pour que l
 UUID=XXXX-XXXX /mnt/medias-brut exfat rw,nofail,x-systemd.automount,uid=TON_COMPTE,gid=jellyfin,dmask=0002,fmask=0113 0 0
 ```
 
-### Modern Warfare 2 (IW4x)
-
-Il faut **tes propres fichiers du jeu** (MW2 2009, acheté sur Steam). Copie-les dans `/srv/iw4x` avec le client [IW4x](https://iw4x.io) (`iw4x.exe`, `iw4x-launcher`), puis relance `./installer.sh` : il installe Wine et le service `iw4x`.
-
 ### Réveil du PC à distance
 
 Remplis `PC_MAC` et `PC_IP`, active le réveil par le réseau (Wake on LAN / WLAN) dans le BIOS et dans Windows. Pour le bouton « mettre en veille », copie [windows/pc-agent.ps1](windows/pc-agent.ps1) sur le PC et lance-le caché à l'ouverture de session (Planificateur de tâches) :
@@ -71,14 +66,14 @@ powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File pc-agent.ps1 -Serve
 
 ## Fonctionnement
 
-- Les scripts vivent dans `~/outils`, les mondes Minecraft dans `~/instances` (`~/mc` pointe vers le monde actif).
-- Tous les scripts lisent `/etc/serveur-maison.conf`. Chacun a ses vérifications : `python3 ~/outils/portail.py --test`, `vitrine.py --test`, `gestion.py autotest`…
+- Les scripts vivent dans `~/outils`.
+- Tous les scripts lisent `/etc/serveur-maison.conf`. Chacun a ses vérifications : `python3 ~/outils/portail.py --test`, `vitrine.py --test`, `mises-a-jour.py --test`…
 - Tâches automatiques (crontab) : surveillance toutes les 5 min, suppressions toutes les 5 min, mises à jour toutes les heures, sauvegarde à 5 h.
 - Jellyfin ne lit pas directement les fichiers téléchargés mais une « vitrine » de liens (`MEDIAS`) : c'est ce qui permet de savoir qu'un film a été supprimé depuis l'appli, et de cacher les fichiers pas encore finis.
 
 ## Sécurité
 
 - Le compte qui installe peut utiliser `sudo` sans mot de passe (nécessaire aux tâches de nuit) : utilise un PC dédié au serveur.
-- Rien d'autre que le VPN et les jeux n'est ouvert sur Internet. Les outils d'admin (Radarr, Sonarr, Prowlarr, Transmission, panneau, AdGuard) sont réservés au VPN et aux adresses MAC de `ADMINS_MAC`.
-- Les mots de passe générés sont dans des fichiers lisibles par ton compte seul (`~/.transmission-mdp`, `~/.palworld-admin`…), et dans la sauvegarde des réglages.
+- Rien d'autre que le VPN n'est ouvert sur Internet. Les outils d'admin (Radarr, Sonarr, Prowlarr, Transmission, AdGuard) sont réservés au VPN et aux adresses MAC de `ADMINS_MAC`.
+- Les mots de passe générés sont dans des fichiers lisibles par ton compte seul (`~/.transmission-mdp`…), et dans la sauvegarde des réglages.
 - Ce dépôt installe des logiciels. Ce que tu télécharges avec reste sous ta responsabilité.

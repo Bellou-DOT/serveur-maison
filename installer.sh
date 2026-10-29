@@ -34,7 +34,7 @@ cron() { # ajoute (ou remplace) la ligne de crontab qui contient $1
 
 etape "Paquets de base"
 sudo apt-get update -qq
-paquets curl ca-certificates python3 nftables wireguard qrencode smartmontools nodejs openssh-server unzip
+paquets curl ca-certificates python3 nftables wireguard qrencode smartmontools
 sudo timedatectl set-timezone "$FUSEAU"
 # Les scripts de nuit (cron) relancent des services et lisent les bases : sudo sans mot de passe pour ce compte.
 echo "$U ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/serveur-maison >/dev/null
@@ -94,19 +94,6 @@ etape "AdGuard Home (bloqueur de pubs, et nom « $HOTE » pour le VPN)"
 if [ ! -x /opt/AdGuardHome/AdGuardHome ]; then
   curl -fsSL https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sudo sh -s -- -o /opt >/dev/null
 fi
-
-etape "Panneau des jeux (http://10.8.0.1:8765 par le VPN)"
-mkdir -p "$H/panneau-web/panneau" "$H/.ssh"
-cp "$DEPOT"/panneau/*.mjs "$DEPOT"/panneau/page.html "$H/panneau-web/panneau/"
-echo "$U@$IP_SERVEUR" > "$H/panneau-web/ip.txt"
-echo "${DOMAINE:-$(curl -s -m 10 https://api.ipify.org)}" > "$H/panneau-web/adresse.txt"
-# Le panneau pilote le serveur par SSH, ici vers lui-même, avec sa propre clé
-[ -f "$H/.ssh/panneau" ] || ssh-keygen -q -t ed25519 -N '' -C panneau -f "$H/.ssh/panneau"
-grep -qF "$(cut -d' ' -f2 "$H/.ssh/panneau.pub")" "$H/.ssh/authorized_keys" 2>/dev/null || cat "$H/.ssh/panneau.pub" >> "$H/.ssh/authorized_keys"
-chmod 600 "$H/.ssh/authorized_keys"
-unite panneau.service
-sudo systemctl daemon-reload
-sudo systemctl enable --now panneau >/dev/null && sudo systemctl restart panneau
 
 if oui AVEC_MEDIAS; then
   etape "Jellyfin (films et séries : http://$IP_SERVEUR:8096)"
@@ -209,74 +196,12 @@ if oui AVEC_PHOTOS; then
   (cd /opt/immich && sudo docker compose up -d >/dev/null)
 fi
 
-if oui AVEC_MINECRAFT; then
-  etape "Minecraft (Paper + Geyser pour les consoles et téléphones)"
-  mkdir -p "$H/instances/.envois"
-  if [ ! -e "$H/mc" ]; then
-    python3 - <<'EOF'
-# Premier monde : dernière version stable de Paper, rangée comme les mondes créés depuis le panneau.
-import json, os, sys, urllib.request
-sys.path.insert(0, os.path.expanduser('~/outils'))
-import gestion
-ua = {'User-Agent': 'serveur-maison (installation)'}
-def api(url):
-    return json.load(urllib.request.urlopen(urllib.request.Request(url, headers=ua), timeout=60))
-versions = [v for groupe in api('https://fill.papermc.io/v3/projects/paper')['versions'].values() for v in groupe if v.replace('.', '').isdigit()]
-for version in versions:
-    b = api(f'https://fill.papermc.io/v3/projects/paper/versions/{version}/builds/latest')
-    if b.get('channel') == 'STABLE':
-        break
-d = gestion.nouvelle_instance('vanilla')
-f = b['downloads']['server:default']
-gestion.telecharger(f['url'], d / 'server.jar')
-import hashlib
-assert hashlib.sha256((d / 'server.jar').read_bytes()).hexdigest() == f['checksums']['sha256'], 'Paper : fichier corrompu'
-(d / 'plugins').mkdir()
-for projet, nom in (('geyser', 'Geyser-Spigot.jar'), ('floodgate', 'floodgate-spigot.jar')):
-    gestion.telecharger(f'https://download.geysermc.org/v2/projects/{projet}/versions/latest/builds/latest/downloads/spigot', d / 'plugins' / nom)
-gestion.ecrire_lanceur(d, gestion.assurer_java(gestion.java_pour(version)), 'jar', 'server.jar')
-gestion.finaliser(d, {'titre': 'Monde vanilla', 'type': 'vanilla', 'version': f'Paper {version}', 'carte': False})
-gestion.basculer(d.name)
-print(f'Monde vanilla prêt : Paper {version} build {b["id"]}')
-EOF
-  fi
-  unite minecraft.service
-  unite veille-jeux.service
-  sudo systemctl daemon-reload
-  sudo systemctl enable --now minecraft veille-jeux >/dev/null
-fi
-
-if oui AVEC_PALWORLD; then
-  etape "Palworld (téléchargement du serveur dédié par SteamCMD, plusieurs Go)"
-  sudo dpkg --add-architecture i386
-  sudo apt-get update -qq
-  paquets lib32gcc-s1
-  [ -x "$H/palworld/PalServer.sh" ] || python3 -c "import os, sys; sys.path.insert(0, os.path.expanduser('~/outils')); import gestion; gestion.tache_palworld()"
-  unite palworld.service
-  unite veille-jeux.service
-  sudo systemctl daemon-reload
-  sudo systemctl enable --now veille-jeux >/dev/null
-fi
-
-if [ -f /srv/iw4x/iw4x.exe ]; then
-  etape "Modern Warfare 2 (IW4x sous Wine, fichiers du jeu trouvés dans /srv/iw4x)"
-  sudo dpkg --add-architecture i386
-  sudo apt-get update -qq
-  paquets wine wine32:i386
-  unite iw4x.service
-  sudo systemctl daemon-reload
-  sudo systemctl enable iw4x >/dev/null
-fi
-
 if oui AVEC_SECURITE; then
   etape "CrowdSec (bloque les adresses qui attaquent le serveur)"
   if ! command -v cscli >/dev/null; then
     curl -fsSL https://install.crowdsec.net | sudo sh >/dev/null
     paquets crowdsec crowdsec-firewall-bouncer-nftables
   fi
-  # Port 8080 laissé libre (carte web Minecraft) : l'API locale de CrowdSec passe sur 8095
-  sudo sed -i 's#listen_uri: 127.0.0.1:8080#listen_uri: 127.0.0.1:8095#' /etc/crowdsec/config.yaml
-  sudo sed -i 's#127.0.0.1:8080#127.0.0.1:8095#' /etc/crowdsec/local_api_credentials.yaml /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
   modele crowdsec-maison.yaml | sed "s#@RESEAU@#$RESEAU_MAISON#" | sudo tee /etc/crowdsec/parsers/s02-enrich/maison-whitelist.yaml >/dev/null
   sudo systemctl restart crowdsec crowdsec-firewall-bouncer
 fi
@@ -284,7 +209,6 @@ fi
 etape "Vérifications"
 python3 "$H/outils/portail.py" --test
 python3 "$H/outils/vitrine.py" --test
-python3 "$H/outils/gestion.py" autotest >/dev/null && echo "gestion : test OK"
 "$H/outils/surveillance.sh" --test
 
 cat <<EOF

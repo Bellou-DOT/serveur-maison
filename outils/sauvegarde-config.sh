@@ -27,13 +27,12 @@ FICHIERS=(
   /opt/AdGuardHome/AdGuardHome.yaml /etc/wireguard /etc/samba/smb.conf /etc/serveur-maison-admin.nft /etc/serveur-maison.conf
   /etc/crowdsec/config.yaml /etc/crowdsec/local_api_credentials.yaml /etc/crowdsec/parsers/s02-enrich/maison-whitelist.yaml
   /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
-  /etc/systemd/system/{AdGuardHome,serveur-maison-admin,iw4x,minecraft,palworld,panneau,portail,prowlarr,radarr,sonarr,veille-jeux}.service
+  /etc/systemd/system/{AdGuardHome,serveur-maison-admin,portail,prowlarr,radarr,sonarr}.service
   /etc/systemd/system/transmission-daemon.service.d
-  "$HOME/outils" "$HOME/panneau-web" "$HOME/.config/transmission-daemon/settings.json" "$HOME/.config/rclone"
+  "$HOME/outils" "$HOME/.config/transmission-daemon/settings.json" "$HOME/.config/rclone"
   "$HOME/.surveillance" "$HOME/duckdns" "$HOME/vpn"
-  /srv/iw4x/userraw/server.cfg /srv/iw4x/userraw/panneau.cfg
 )
-for f in "$HOME"/.transmission-mdp "$HOME"/.medias-mdp "$HOME"/.palworld-admin "$HOME"/.iw4x-* ; do [ -e "$f" ] && FICHIERS+=("$f"); done
+for f in "$HOME"/.transmission-mdp ; do [ -e "$f" ] && FICHIERS+=("$f"); done
 crontab -l > "$T/crontab.txt"
 # Chemins absents ignorés (un service désinstallé ne doit pas faire échouer la sauvegarde de la nuit)
 EXISTANTS=()

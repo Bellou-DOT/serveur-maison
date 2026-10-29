@@ -30,7 +30,7 @@ ACCUEIL = Path.home()
 ATTENTE = ACCUEIL / '.films-en-attente.json'
 LIMITE = 10 * 1024 ** 3
 PAGE = Path(__file__).with_name('portail.html')
-SERVICES = ['jellyfin', 'docker', 'radarr', 'sonarr', 'prowlarr', 'transmission-daemon', 'minecraft', 'palworld', 'panneau', 'veille-jeux', 'iw4x']
+SERVICES = ['jellyfin', 'docker', 'radarr', 'sonarr', 'prowlarr', 'transmission-daemon']
 
 
 def cle_api(app):
@@ -300,9 +300,9 @@ def etat_services():
     return dict(zip(SERVICES, actifs))
 
 
-NOMS_PROCESSUS = {'java': 'Minecraft', 'PalServer-Linux': 'Palworld', 'jellyfin': 'Jellyfin', 'ffmpeg': 'Jellyfin (conversion)',
+NOMS_PROCESSUS = {'jellyfin': 'Jellyfin', 'ffmpeg': 'Jellyfin (conversion)',
                   'immich': 'Immich', 'immich-api': 'Immich', 'python': 'Immich (IA)', 'postgres': 'Base Immich',
-                  'transmission-da': 'Transmission', 'Radarr': 'Radarr', 'Sonarr': 'Sonarr', 'Prowlarr': 'Prowlarr', 'node': 'Seerr / panneau', 'iw4x.exe': 'MW2 (IW4x)', 'wineserver64': 'MW2 (Wine)'}
+                  'transmission-da': 'Transmission', 'Radarr': 'Radarr', 'Sonarr': 'Sonarr', 'Prowlarr': 'Prowlarr', 'node': 'Seerr'}
 
 
 def systeme():
