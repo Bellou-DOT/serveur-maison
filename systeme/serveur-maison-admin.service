@@ -6,6 +6,7 @@ After=network-pre.target
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/sbin/nft -f /etc/serveur-maison-admin.nft
+ExecStartPost=@ACCUEIL@/outils/pare-feu-ipv6.sh
 ExecStop=/usr/sbin/nft delete table inet serveur_maison_admin
 
 [Install]

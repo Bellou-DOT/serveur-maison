@@ -1,4 +1,5 @@
-# Outils d'administration réservés aux appareils admin (ADMINS_MAC), au VPN et au serveur lui-même.
+# Outils d'administration réservés aux appareils admin (ADMINS_MAC), au VPN et au serveur lui-même ;
+# en IPv6, rien d'autre que le VPN n'est joignable depuis Internet.
 # Généré par installer.sh dans /etc/serveur-maison-admin.nft (le portail lit aussi cette liste d'adresses MAC).
 table inet serveur_maison_admin
 delete table inet serveur_maison_admin
@@ -12,6 +13,22 @@ table inet serveur_maison_admin {
 		type filter hook input priority -5; policy accept;
 		# Radarr, Sonarr, Prowlarr, Transmission, AdGuard
 		tcp dport { 7878, 8989, 9696, 9091, 3000 } jump outils_admin
+		# IPv6 : sans NAT, la box est la seule barrière ; on n'en dépend pas
+		iifname "@INTERFACE@" meta nfproto ipv6 ct state new jump internet6
+	}
+
+	# Réseau IPv6 de la maison : rempli par outils/pare-feu-ipv6.sh (le préfixe donné par la box peut changer)
+	set lan6 {
+		type ipv6_addr
+		flags interval
+		elements = { fe80::/10 }
+	}
+
+	chain internet6 {
+		ip6 saddr @lan6 accept
+		meta l4proto ipv6-icmp accept
+		udp dport 51820 accept   # VPN
+		counter drop
 	}
 
 	chain outils_admin {

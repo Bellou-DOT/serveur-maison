@@ -108,6 +108,13 @@ powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File pc-agent.ps1 -Serve
 ## Sécurité
 
 - Le compte qui installe peut utiliser `sudo` sans mot de passe (nécessaire aux tâches de nuit) : utilise un PC dédié au serveur.
-- Rien d'autre que le VPN n'est ouvert sur Internet. Les outils d'admin (Radarr, Sonarr, Prowlarr, Transmission, AdGuard) sont réservés au VPN et aux adresses MAC de `ADMINS_MAC`.
-- Les mots de passe générés sont dans des fichiers lisibles par ton compte seul (`~/.transmission-mdp`…), et dans la sauvegarde des réglages.
+  Aucun service joignable par le réseau ne tourne sous ce compte : le portail, Transmission, Radarr, Sonarr et Prowlarr
+  tournent sous le compte `medias`, qui n'a aucun droit d'administration.
+- Rien d'autre que le VPN n'est ouvert sur Internet, y compris en IPv6 (le pare-feu du serveur n'accepte que le réseau
+  de la maison, même si la box laisse passer). Les outils d'admin (Radarr, Sonarr, Prowlarr, Transmission, AdGuard)
+  sont réservés au VPN et aux adresses MAC de `ADMINS_MAC`.
+- Le portail refuse les adresses qui ne sont pas les siennes (protection contre le « DNS rebinding ») et, pour
+  Transmission, tout ordre qui lancerait un programme ou écrirait hors du dossier des médias.
+- Les mots de passe générés sont dans des fichiers lisibles par ton compte et le compte `medias` seuls
+  (`/var/lib/medias/.transmission-mdp`…), et dans la sauvegarde des réglages.
 - Ce dépôt installe des logiciels. Ce que tu télécharges avec reste sous ta responsabilité.

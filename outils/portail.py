@@ -6,7 +6,6 @@
                         ≤ 10 Go → lancé tout de suite ; plus gros → notification avec Télécharger / Annuler
   portail.py --test     vérifications sans réseau
 """
-import getpass
 import html
 import ipaddress
 import json
@@ -29,6 +28,8 @@ from config import C
 ACCUEIL = Path.home()
 ATTENTE = ACCUEIL / '.films-en-attente.json'
 LIMITE = 10 * 1024 ** 3
+# Transmission tourne sous le compte medias ; ce fichier est lisible par lui et par ton compte
+TRANSMISSION_MDP = Path('/var/lib/medias/.transmission-mdp')
 PAGE = Path(__file__).with_name('portail.html')
 SERVICES = ['jellyfin', 'docker', 'radarr', 'sonarr', 'prowlarr', 'transmission-daemon']
 
@@ -38,8 +39,8 @@ def cle_api(app):
 
 
 def auth_transmission():
-    mdp = (ACCUEIL / '.transmission-mdp').read_text().strip()
-    return 'Basic ' + __import__('base64').b64encode(f'{getpass.getuser()}:{mdp}'.encode()).decode()
+    mdp = TRANSMISSION_MDP.read_text().strip()
+    return 'Basic ' + __import__('base64').b64encode(f'medias:{mdp}'.encode()).decode()
 
 
 def transmission(methode, **arguments):

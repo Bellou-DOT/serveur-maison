@@ -103,5 +103,7 @@ les réglages. Le PC qui démarrera sur la clé s'installera ensuite tout seul (
 - Journaux : `journalctl -u <service> -n 50` ; tâches automatiques : `~/.surveillance/*.log` ; `crontab -l`.
 - Services : `portail`, `jellyfin`, `radarr`, `sonarr`, `prowlarr`, `transmission-daemon`, `docker` (Seerr, Immich),
   `wg-quick@wg0`, `AdGuardHome`, `smbd`, `crowdsec`, `serveur-maison-admin` (pare-feu des outils d'admin).
+- Le portail, Transmission, Radarr, Sonarr et Prowlarr tournent sous le compte `medias` (sans droits) : ne les repasse pas
+  sous le compte de la personne. Leurs fichiers sont dans `/var/lib/medias`, `/var/lib/<app>` et `/opt/<App>`.
 - Un outil d'admin injoignable depuis la maison : c'est normal hors VPN si l'appareil n'est pas dans `ADMINS_MAC`.
 - Chaque script a ses tests : `--test` (portail, vitrine, suppressions, mises-a-jour, configurer, profils-anciens).

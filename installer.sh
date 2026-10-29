@@ -37,7 +37,6 @@ oui() { [ "${!1:-non}" = oui ]; }
 paquets() { sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq -o DPkg::Lock::Timeout=600 "$@" >/dev/null; }
 modele() { sed -e "s#@UTILISATEUR@#$U#g" -e "s#@ACCUEIL@#$H#g" -e "s#@IP@#$IP_SERVEUR#g" "$DEPOT/systeme/$1"; }
 unite() { modele "$1" | sudo tee "/etc/systemd/system/${2:-$1}" >/dev/null; }
-mdp() { [ -s "$1" ] || (umask 077; head -c 18 /dev/urandom | base64 | tr -d '/+=' > "$1"); }
 cron() { # ajoute (ou remplace) la ligne de crontab qui contient $1
   { crontab -l 2>/dev/null | grep -vF "$1" || true; echo "$2"; } | crontab -
 }
@@ -53,12 +52,20 @@ sudo chmod 440 /etc/sudoers.d/serveur-maison
 etape "Outils du serveur (~/outils) et portail http://$HOTE"
 getent group jellyfin >/dev/null || sudo groupadd --system jellyfin
 sudo usermod -aG jellyfin "$U"
+# Compte « medias » sans aucun droit d'administration : portail, Transmission, Radarr, Sonarr et Prowlarr tournent
+# dessous. Une faille dans l'un d'eux ne donne pas le serveur (ton compte, lui, a sudo sans mot de passe).
+M=/var/lib/medias
+id medias >/dev/null 2>&1 || sudo useradd --system --create-home --home-dir "$M" --shell /usr/sbin/nologin -g jellyfin medias
 mkdir -p "$H/outils" "$H/sauvegardes" "$H/.surveillance"
 chmod 700 "$H/.surveillance"
+# Les services lisent ~/outils sans pouvoir lister ton dossier ni modifier les scripts (lancés par tes tâches cron)
+chmod 751 "$H"
 cp "$DEPOT"/outils/* "$H/outils/"
-chmod +x "$H"/outils/*.py "$H"/outils/*.sh
+chmod 755 "$H/outils" "$H"/outils/*.py "$H"/outils/*.sh
 # Sujet ntfy secret : quiconque le connaît peut lire les notifications. Créé une seule fois.
 [ -s "$H/.surveillance/sujet" ] || echo "serveur-maison-$(head -c 12 /dev/urandom | od -An -tx1 | tr -d ' \n')" > "$H/.surveillance/sujet"
+sudo install -d -o medias -g jellyfin -m 700 "$M/.surveillance"
+sudo install -o medias -g jellyfin -m 600 "$H/.surveillance/sujet" "$M/.surveillance/sujet"
 ELEMENTS=""
 [ -n "$ADMINS_MAC" ] && ELEMENTS="elements = { $(echo "$ADMINS_MAC" | xargs | sed 's/ /, /g') }"
 modele serveur-maison-admin.nft | sed -e "s#@ELEMENTS@#$ELEMENTS#" -e "s#@INTERFACE@#$INTERFACE#" | sudo tee /etc/serveur-maison-admin.nft >/dev/null
@@ -71,6 +78,7 @@ sudo systemctl enable --now smartd >/dev/null 2>&1 || sudo systemctl enable --no
 cron outils/surveillance.sh "*/5 * * * * $H/outils/surveillance.sh"
 cron outils/sauvegarde.sh "0 5 * * * $H/outils/sauvegarde.sh"
 cron outils/mises-a-jour.py "23 * * * * $H/outils/mises-a-jour.py >> $H/.surveillance/mises-a-jour.log 2>&1"
+cron outils/pare-feu-ipv6.sh "*/5 * * * * sudo -n $H/outils/pare-feu-ipv6.sh"
 
 etape "VPN WireGuard (10.8.0.0/24, port UDP 51820)"
 if ! sudo test -f /etc/wireguard/wg0.conf; then
@@ -104,8 +112,6 @@ EOF
     sudo apt-get update -qq
   fi
   paquets jellyfin
-  sudo usermod -aG jellyfin "$U"
-  sudo usermod -aG "$(id -gn)" jellyfin
 
   etape "Dossiers des médias ($MEDIAS_BRUT → vitrine $MEDIAS)"
   for d in "$MEDIAS_BRUT" "$MEDIAS_BRUT/Film" "$MEDIAS_BRUT/Séries" "$MEDIAS_BRUT/Téléchargements" "$MEDIAS"; do
@@ -127,9 +133,9 @@ EOF
     if [ ! -x "/opt/$APP/$APP" ]; then
       curl -fsSL -o "/tmp/$app.tar.gz" "${URLS[$APP]}"
       sudo tar xzf "/tmp/$app.tar.gz" -C /opt && rm "/tmp/$app.tar.gz"
-      sudo chown -R "$U:jellyfin" "/opt/$APP"
     fi
-    [ -d "/var/lib/$app" ] || sudo install -d -o "$U" -g jellyfin "/var/lib/$app"
+    [ -d "/var/lib/$app" ] || sudo install -d -g jellyfin "/var/lib/$app"
+    sudo chown -R medias:jellyfin "/opt/$APP" "/var/lib/$app"  # (re)donnés au compte medias, même sur une ancienne installation
     modele arr.service | sed -e "s#@APP@#$APP#g" -e "s#@app@#$app#g" | sudo tee "/etc/systemd/system/$app.service" >/dev/null
   done
   sudo systemctl daemon-reload
@@ -140,10 +146,12 @@ EOF
   sudo systemctl stop transmission-daemon
   sudo mkdir -p /etc/systemd/system/transmission-daemon.service.d
   modele transmission-utilisateur.conf | sudo tee /etc/systemd/system/transmission-daemon.service.d/utilisateur.conf >/dev/null
-  mkdir -p "$H/.config/transmission-daemon"
-  mdp "$H/.transmission-mdp"
+  sudo install -d -o medias -g jellyfin -m 750 "$M/transmission"
+  # Mot de passe de Transmission : lisible par medias (le portail) et par ton compte (configurer, suppressions)
+  sudo test -s "$M/.transmission-mdp" ||
+    head -c 18 /dev/urandom | base64 | tr -d '/+=' | sudo install -m 640 -o medias -g "$(id -gn)" /dev/stdin "$M/.transmission-mdp"
   # Réglages imposés (le reste garde les valeurs par défaut ou ce que tu as changé) ; Transmission chiffre le mot de passe.
-  python3 - "$H/.config/transmission-daemon/settings.json" "$U" "$(cat "$H/.transmission-mdp")" "$MEDIAS_BRUT/Téléchargements" <<'EOF'
+  sudo -u medias python3 - "$M/transmission/settings.json" medias "$(sudo cat "$M/.transmission-mdp")" "$MEDIAS_BRUT/Téléchargements" <<'EOF'
 import json, sys
 from pathlib import Path
 f, u, mdp, dl = Path(sys.argv[1]), *sys.argv[2:]

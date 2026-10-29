@@ -10,7 +10,6 @@
   - AdGuard Home : écoute sur le VPN et nom HOTE -> 10.8.0.1 (une fois son assistant terminé).
 --test : vérifications sans réseau.
 """
-import getpass
 import json
 import os
 import re
@@ -131,8 +130,8 @@ def radarr_sonarr(app):
         dire('fait', f'{app} : dossier {dossier}')
     film = app == 'radarr'
     ajouter(app, 'downloadclient', 'Transmission', 'Transmission', {
-        'host': '127.0.0.1', 'port': 9091, 'urlBase': '/transmission/', 'username': getpass.getuser(),
-        'password': (ACCUEIL / '.transmission-mdp').read_text().strip(),
+        'host': '127.0.0.1', 'port': 9091, 'urlBase': '/transmission/', 'username': 'medias',
+        'password': Path('/var/lib/medias/.transmission-mdp').read_text().strip(),
         ('movieCategory' if film else 'tvCategory'): 'films' if film else 'series', 'addPaused': True},
         enable=True, priority=1)
     # Les torrents arrivent en pause : le garde-fou lance les petits et demande l'accord pour les gros (> 10 Go)

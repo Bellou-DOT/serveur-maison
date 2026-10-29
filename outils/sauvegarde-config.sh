@@ -29,10 +29,9 @@ FICHIERS=(
   /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
   /etc/systemd/system/{AdGuardHome,serveur-maison-admin,portail,prowlarr,radarr,sonarr}.service
   /etc/systemd/system/transmission-daemon.service.d
-  "$HOME/outils" "$HOME/.config/transmission-daemon/settings.json" "$HOME/.config/rclone"
+  "$HOME/outils" /var/lib/medias/transmission/settings.json /var/lib/medias/.transmission-mdp "$HOME/.config/rclone"
   "$HOME/.surveillance" "$HOME/vpn"
 )
-for f in "$HOME"/.transmission-mdp ; do [ -e "$f" ] && FICHIERS+=("$f"); done
 crontab -l > "$T/crontab.txt"
 # Chemins absents ignorés (un service désinstallé ne doit pas faire échouer la sauvegarde de la nuit)
 EXISTANTS=()
