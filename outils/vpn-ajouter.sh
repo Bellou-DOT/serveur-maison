@@ -4,7 +4,7 @@
 # Retirer un appareil : supprimer sa section [Peer] dans /etc/wireguard/wg0.conf puis « sudo systemctl restart wg-quick@wg0 ».
 set -euo pipefail
 . /etc/serveur-maison.conf
-PUBLIC=${DOMAINE:-$(curl -s -m 10 https://api.ipify.org)}
+PUBLIC=$(curl -s -m 10 https://api.ipify.org)
 NOM=${1:?nom de l appareil}
 [[ $NOM =~ ^[a-z0-9-]{1,20}$ ]] || { echo "Nom invalide"; exit 1; }
 [ ! -e ~/vpn/$NOM.conf ] || { echo "Existe déjà : ~/vpn/$NOM.conf"; exit 1; }

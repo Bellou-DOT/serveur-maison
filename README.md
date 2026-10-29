@@ -69,7 +69,6 @@ sudo nano /etc/serveur-maison.conf     # tes réglages : noms, adresse IP, ce qu
 Avant de commencer :
 - **Réserve une adresse IP fixe** pour le serveur dans ta box (bail DHCP statique), et mets-la dans `IP_SERVEUR`.
 - **Ouvre le port UDP 51820** dans la box vers le serveur (VPN). C'est le seul.
-- Une **adresse fixe sur Internet** est conseillée (gratuite sur [duckdns.org](https://www.duckdns.org)) : `DOMAINE` et `DUCKDNS_JETON`.
 
 Le fichier de réglages est commenté ligne par ligne (modèle : [config.exemple](config.exemple)). On peut relancer
 `./installer.sh` autant de fois qu'on veut : rien de ce qui existe n'est écrasé.

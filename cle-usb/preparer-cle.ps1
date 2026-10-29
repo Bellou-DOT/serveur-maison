@@ -4,7 +4,7 @@
 # Pour une IA (voir AGENTS.md) : -Lister montre les clés USB ; les réponses passent en paramètres, et seuls les mots de
 # passe et la confirmation EFFACER sont demandés, dans la fenêtre administrateur, à la personne elle-même.
 param([switch]$Lister, [string]$Nom, [string]$Hote, [string]$Utilisateur, [string]$Wifi, [string]$Films,
-      [string]$Photos, [string]$Domaine, [string]$Jeton, [string]$Cle)
+      [string]$Photos, [string]$Cle)
 $ErrorActionPreference = 'Stop'
 $Journal = Join-Path $PSScriptRoot 'preparation.log'
 
@@ -66,8 +66,6 @@ $Wifi = Demander 'Nom du Wi-Fi (laisse vide si le serveur est branché par câbl
 $WifiMdp = if ($Wifi) { Secret "Mot de passe du Wi-Fi « $Wifi »" } else { '' }
 $Films = Demander 'Installer les films et séries (Jellyfin…) ? oui/non' '^(oui|non)$' 'oui' 'Films'
 $Photos = Demander 'Installer la sauvegarde des photos (Immich) ? oui/non' '^(oui|non)$' 'oui' 'Photos'
-$Domaine = Demander 'Adresse DuckDNS (ex. moi.duckdns.org), vide sinon' '^([a-z0-9-]+\.duckdns\.org)?$' '' 'Domaine'
-$Jeton = if ($Domaine) { Demander 'Jeton DuckDNS' '^[0-9a-f-]{36}$' '' 'Jeton' } else { '' }
 
 # Clé USB : uniquement les disques USB, jamais le disque de Windows
 $Disques = @(Get-Disk | Where-Object { $_.BusType -eq 'USB' -and -not $_.IsBoot -and -not $_.IsSystem })
@@ -109,7 +107,7 @@ robocopy $Depot (Join-Path $U 'serveur-maison') /E /XD .git /NFL /NDL /NJH /NJS 
 if ($LASTEXITCODE -ge 8) { throw "Copie du dépôt ratée (robocopy $LASTEXITCODE)." }
 
 $Conf = [IO.File]::ReadAllText((Join-Path $Depot 'config.exemple'))
-$Valeurs = @{ NOM_PORTAIL = $Nom; HOTE = $Hote; AVEC_MEDIAS = $Films; AVEC_PHOTOS = $Photos; DOMAINE = $Domaine; DUCKDNS_JETON = $Jeton }
+$Valeurs = @{ NOM_PORTAIL = $Nom; HOTE = $Hote; AVEC_MEDIAS = $Films; AVEC_PHOTOS = $Photos }
 foreach ($k in $Valeurs.Keys) { $Conf = [regex]::Replace($Conf, "(?m)^$k=`"[^`"]*`"", "$k=`"$($Valeurs[$k])`"") }
 Ecrire (Join-Path $U 'serveur-maison.conf') $Conf
 

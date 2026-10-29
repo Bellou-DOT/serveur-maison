@@ -17,17 +17,16 @@ les réglages. Le PC qui démarrera sur la clé s'installera ensuite tout seul (
 1. **Demande-lui dans la conversation**, en une fois : le nom du serveur (affiché sur le portail), le nom du compte
    Linux (minuscules, ex. `serveur`), s'il veut les films et séries (`oui`/`non`), la sauvegarde des photos
    (`oui`/`non`), le **nom** de son Wi-Fi s'il n'y a pas de câble pour le serveur (sur Windows :
-   `netsh wlan show interfaces`, ligne SSID, pour lui proposer celui où il est), et son adresse DuckDNS + jeton s'il
-   en a une (sinon rien). ✋ **Ne demande aucun mot de passe** : le script les lui demande lui-même.
+   `netsh wlan show interfaces`, ligne SSID, pour lui proposer celui où il est). ✋ **Ne demande aucun mot de passe** : le script les lui demande lui-même.
 2. Fais-lui brancher une clé USB d'au moins 8 Go, puis `powershell -ExecutionPolicy Bypass -File
    cle-usb\preparer-cle.ps1 -Lister`. Montre-lui la liste et fais-lui **confirmer laquelle** : elle sera effacée.
    Préviens-le aussi que le téléchargement fait **4 Go** (Ubuntu Server 24.04.5, depuis releases.ubuntu.com).
 3. Lance (en arrière-plan si ton outil coupe les commandes longues : comptez 10 à 40 minutes) :
    ```
    powershell -ExecutionPolicy Bypass -File cle-usb\preparer-cle.ps1 -Nom "…" -Hote "…" -Utilisateur "…" `
-     -Films oui -Photos oui -Wifi "…" -Domaine "" -Cle <numéro>
+     -Films oui -Photos oui -Wifi "…" -Cle <numéro>
    ```
-   (`-Hote` : nom court en minuscules sans espace ; `-Wifi ""` si câble ; `-Jeton "…"` seulement avec un `-Domaine`.)
+   (`-Hote` : nom court en minuscules sans espace ; `-Wifi ""` si câble.)
    Dis-lui **avant** qu'une fenêtre va s'ouvrir : il accepte les droits administrateur, tape le mot de passe du
    compte (deux fois), celui du Wi-Fi, puis **EFFACER** pour confirmer. La fenêtre se ferme toute seule à la fin.
 4. La commande affiche tout ce qui s'est passé dans cette fenêtre (aussi dans `cle-usb\preparation.log`).
@@ -49,7 +48,7 @@ les réglages. Le PC qui démarrera sur la clé s'installera ensuite tout seul (
   propose pas et ne les configure pas.
 - **Rien d'irréversible sans son accord** : formater ou monter un disque, modifier `/etc/fstab`, effacer des fichiers.
   Montre ce que tu vas faire et attends un « oui ».
-- Tout ce que l'installation crée de secret (mots de passe générés, clés du VPN, jeton DuckDNS) reste sur le serveur :
+- Tout ce que l'installation crée de secret (mots de passe générés, clés du VPN) reste sur le serveur :
   ne l'affiche pas en entier sans raison.
 
 ## Étapes
@@ -63,8 +62,7 @@ les réglages. Le PC qui démarrera sur la clé s'installera ensuite tout seul (
      Dis-lui de **réserver cette adresse dans sa box** (bail DHCP statique) et de **rediriger le port UDP 51820**
      vers elle (VPN). Ne continue pas tant qu'il n'a pas confirmé, ou explique que le VPN ne marchera pas depuis dehors.
    - Ne lui demande que : le nom de son serveur (`NOM_PORTAIL`, `HOTE` en minuscules sans espace), s'il veut les films
-     (`AVEC_MEDIAS`) et les photos (`AVEC_PHOTOS`), et s'il a une adresse DuckDNS (`DOMAINE`, `DUCKDNS_JETON` :
-     c'est lui qui crée le compte sur duckdns.org et te donne le jeton).
+     (`AVEC_MEDIAS`) et les photos (`AVEC_PHOTOS`).
    - `ADMINS_MAC` : l'adresse MAC du PC ou téléphone d'où il administrera sans VPN (sur Windows : `getmac /v`,
      sur iPhone : Réglages → Wi-Fi → (i), en désactivant l'adresse privée pour ce réseau). Peut rester vide.
    - `PC_MAC` / `PC_IP` seulement s'il veut réveiller son PC à distance (voir README).

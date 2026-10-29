@@ -72,23 +72,6 @@ cron outils/surveillance.sh "*/5 * * * * $H/outils/surveillance.sh"
 cron outils/sauvegarde.sh "0 5 * * * $H/outils/sauvegarde.sh"
 cron outils/mises-a-jour.py "23 * * * * $H/outils/mises-a-jour.py >> $H/.surveillance/mises-a-jour.log 2>&1"
 
-if [ -n "$DUCKDNS_JETON" ] && [[ $DOMAINE == *.duckdns.org ]]; then
-  etape "DuckDNS : $DOMAINE suit l'IP publique de la maison"
-  mkdir -p "$H/duckdns"
-  (umask 077; echo "url = \"https://www.duckdns.org/update?domains=${DOMAINE%.duckdns.org}&token=$DUCKDNS_JETON\"" > "$H/duckdns/curl.conf")
-  cat > "$H/duckdns/maj.sh" <<'EOF'
-#!/usr/bin/env bash
-# Met à jour l'adresse DuckDNS avec l'IP publique actuelle. Le jeton est dans curl.conf (lisible par ce compte seul).
-r=$(curl -s -m 20 -K "$HOME/duckdns/curl.conf")
-echo "$(date '+%F %T') $r" >> "$HOME/duckdns/maj.log"
-tail -n 500 "$HOME/duckdns/maj.log" > "$HOME/duckdns/maj.tmp" && mv "$HOME/duckdns/maj.tmp" "$HOME/duckdns/maj.log"
-[ "$r" = OK ]
-EOF
-  chmod +x "$H/duckdns/maj.sh"
-  cron duckdns/maj.sh "*/5 * * * * $H/duckdns/maj.sh"
-  "$H/duckdns/maj.sh" || echo "⚠ DuckDNS a refusé la mise à jour : vérifie DOMAINE et DUCKDNS_JETON."
-fi
-
 etape "VPN WireGuard (10.8.0.0/24, port UDP 51820)"
 if ! sudo test -f /etc/wireguard/wg0.conf; then
   CLE=$(wg genkey)

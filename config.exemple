@@ -10,8 +10,6 @@ HOTE="monserv"                     # le portail répond sur http://monserv (par 
 IP_SERVEUR=""                      # ex. 192.168.1.20
 RESEAU_MAISON=""                   # ex. 192.168.1.0/24
 INTERFACE=""                       # carte réseau (commande : ip -br link), ex. wlo1
-DOMAINE=""                         # adresse publique pour le VPN (ex. moi.duckdns.org) ; vide = IP publique
-DUCKDNS_JETON=""                   # jeton DuckDNS si DOMAINE est en .duckdns.org (mise à jour de l'IP toutes les 5 min)
 
 # Appareils de la maison qui ont accès aux outils d'admin (Radarr, Sonarr, Prowlarr, Transmission, AdGuard)
 # sans passer par le VPN : leurs adresses MAC, séparées par des espaces. Le VPN y a toujours accès.
