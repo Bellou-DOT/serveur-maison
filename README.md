@@ -15,7 +15,17 @@ Tout est en français et prévu pour **Ubuntu 24.04** sur un PC dédié (8 Go de
 
 ## Installation
 
-### Le plus simple : la clé USB qui fait tout
+### Le plus simple : demander à une IA de préparer la clé USB
+
+Sur ton PC Windows, avec un assistant de code (par exemple [Claude Code](https://claude.com/claude-code)), dis-lui :
+
+> Récupère `<adresse-du-dépôt>` avec git et installe le serveur.
+
+Il te pose quelques questions, prépare la clé USB (tu tapes toi-même tes mots de passe dans la fenêtre qui s'ouvre)
+et te dit quoi faire ensuite : brancher la clé sur le futur serveur, l'allumer, taper **yes**. Tout le reste se
+fait seul. Ses consignes sont dans [AGENTS.md](AGENTS.md).
+
+### La clé USB à la main
 
 Sur un PC Windows, avec une clé USB d'au moins 8 Go :
 

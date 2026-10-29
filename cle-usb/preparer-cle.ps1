@@ -1,7 +1,18 @@
 ﻿# Prépare une clé USB qui installe Ubuntu Server ET le serveur maison tout seuls.
 # Clic droit sur ce fichier → « Exécuter avec PowerShell » (les droits administrateur seront demandés).
 # ⚠ La clé est entièrement effacée. Le PC qui démarrera dessus aussi, après une seule question de confirmation.
+# Pour une IA (voir AGENTS.md) : -Lister montre les clés USB ; les réponses passent en paramètres, et seuls les mots de
+# passe et la confirmation EFFACER sont demandés, dans la fenêtre administrateur, à la personne elle-même.
+param([switch]$Lister, [string]$Nom, [string]$Hote, [string]$Utilisateur, [string]$Wifi, [string]$Films,
+      [string]$Photos, [string]$Domaine, [string]$Jeton, [string]$Cle)
 $ErrorActionPreference = 'Stop'
+$Journal = Join-Path $PSScriptRoot 'preparation.log'
+
+if ($Lister) {
+  Get-Disk | Where-Object { $_.BusType -eq 'USB' -and -not $_.IsBoot -and -not $_.IsSystem } |
+    ForEach-Object { "{0} : {1} ({2:N0} Go)" -f $_.Number, $_.FriendlyName, ($_.Size / 1GB) }
+  exit
+}
 $Depot = Split-Path -Parent $PSScriptRoot
 $Iso = 'ubuntu-24.04.5-live-server-amd64.iso'
 $IsoUrl = "https://releases.ubuntu.com/24.04/$Iso"
@@ -9,11 +20,23 @@ $IsoSha256 = '97f3d7ffb032c3eb3b23d2c8be9cc76e60c2c1f2c0146ba5ba9fe01cafae0fd8'
 
 # Droits administrateur (nécessaires pour formater la clé) : relance de ce script élevé
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-  Start-Process powershell.exe -Verb RunAs -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-NoExit', '-File', "`"$PSCommandPath`""
+  $Args2 = @('-NoProfile', '-ExecutionPolicy', 'Bypass') + $(if ($PSBoundParameters.Count) { @() } else { @('-NoExit') }) +
+           @('-File', "`"$PSCommandPath`"")
+  foreach ($k in $PSBoundParameters.Keys) { $Args2 += "-$k", "`"$($PSBoundParameters[$k])`"" }
+  Remove-Item $Journal -ErrorAction SilentlyContinue
+  Start-Process powershell.exe -Verb RunAs -Wait -ArgumentList $Args2
+  if (Test-Path $Journal) { Get-Content $Journal }  # ce qui s'est passé dans la fenêtre administrateur (lu par l'IA)
   exit
 }
+Start-Transcript -Path $Journal | Out-Null
+trap { Write-Host "ERREUR : $_" -ForegroundColor Red; Stop-Transcript | Out-Null; exit 1 }
 
-function Demander($question, $motif, $defaut = '') {
+$Donnes = $PSBoundParameters
+function Demander($question, $motif, $defaut = '', $parametre = '') {
+  if ($parametre -and $Donnes.ContainsKey($parametre)) {  # déjà donné en paramètre (par l'IA)
+    if ($Donnes[$parametre] -cmatch $motif) { return $Donnes[$parametre] }
+    throw "Paramètre -$parametre invalide : « $($Donnes[$parametre]) » ($question)"
+  }
   while ($true) {
     $r = Read-Host ($question + $(if ($defaut) { " [$defaut]" } else { '' }))
     if (-not $r) { $r = $defaut }
@@ -31,27 +54,27 @@ function Ecrire($chemin, $texte) {  # UTF-8 sans BOM, fins de ligne Linux
 }
 
 Write-Host "`n=== Clé d'installation du serveur maison ===`n" -ForegroundColor Cyan
-$Nom = Demander 'Nom du serveur (affiché sur le portail)' '^[^"\\`$]{1,40}$' 'MonServ'
-$Hote = Demander 'Nom court, en minuscules sans espace (adresse http://nom)' '^[a-z][a-z0-9-]{0,30}$' ($Nom.ToLower() -replace '[^a-z0-9-]', '')
-$Utilisateur = Demander 'Nom du compte sur le serveur (minuscules)' '^[a-z][a-z0-9-]{0,30}$' 'serveur'
+$Nom = Demander 'Nom du serveur (affiché sur le portail)' '^[^"\\`$]{1,40}$' 'MonServ' 'Nom'
+$Hote = Demander 'Nom court, en minuscules sans espace (adresse http://nom)' '^[a-z][a-z0-9-]{0,30}$' ($Nom.ToLower() -replace '[^a-z0-9-]', '') 'Hote'
+$Utilisateur = Demander 'Nom du compte sur le serveur (minuscules)' '^[a-z][a-z0-9-]{0,30}$' 'serveur' 'Utilisateur'
 do {
   $Mdp = Secret 'Mot de passe de ce compte'
   $Mdp2 = Secret 'Encore une fois'
   if ($Mdp -ne $Mdp2 -or $Mdp.Length -lt 8) { Write-Host '  Différents ou trop court (8 caractères minimum).' -ForegroundColor Yellow }
 } until ($Mdp -eq $Mdp2 -and $Mdp.Length -ge 8)
-$Wifi = Read-Host 'Nom du Wi-Fi (laisse vide si le serveur est branché par câble)'
-$WifiMdp = if ($Wifi) { Secret 'Mot de passe du Wi-Fi' } else { '' }
-$Films = Demander 'Installer les films et séries (Jellyfin…) ? oui/non' '^(oui|non)$' 'oui'
-$Photos = Demander 'Installer la sauvegarde des photos (Immich) ? oui/non' '^(oui|non)$' 'oui'
-$Domaine = Demander 'Adresse DuckDNS (ex. moi.duckdns.org), vide sinon' '^([a-z0-9-]+\.duckdns\.org)?$'
-$Jeton = if ($Domaine) { Demander 'Jeton DuckDNS' '^[0-9a-f-]{36}$' } else { '' }
+$Wifi = Demander 'Nom du Wi-Fi (laisse vide si le serveur est branché par câble)' '^[^"]{0,32}$' '' 'Wifi'
+$WifiMdp = if ($Wifi) { Secret "Mot de passe du Wi-Fi « $Wifi »" } else { '' }
+$Films = Demander 'Installer les films et séries (Jellyfin…) ? oui/non' '^(oui|non)$' 'oui' 'Films'
+$Photos = Demander 'Installer la sauvegarde des photos (Immich) ? oui/non' '^(oui|non)$' 'oui' 'Photos'
+$Domaine = Demander 'Adresse DuckDNS (ex. moi.duckdns.org), vide sinon' '^([a-z0-9-]+\.duckdns\.org)?$' '' 'Domaine'
+$Jeton = if ($Domaine) { Demander 'Jeton DuckDNS' '^[0-9a-f-]{36}$' '' 'Jeton' } else { '' }
 
 # Clé USB : uniquement les disques USB, jamais le disque de Windows
 $Disques = @(Get-Disk | Where-Object { $_.BusType -eq 'USB' -and -not $_.IsBoot -and -not $_.IsSystem })
 if (-not $Disques) { throw 'Aucune clé USB trouvée : branche-la (8 Go minimum) et relance.' }
 Write-Host "`nClés USB branchées :"
 $Disques | ForEach-Object { Write-Host ("  {0} : {1} ({2:N0} Go)" -f $_.Number, $_.FriendlyName, ($_.Size / 1GB)) }
-$Numero = Demander 'Numéro de la clé à utiliser' ('^(' + (($Disques | ForEach-Object Number) -join '|') + ')$')
+$Numero = Demander 'Numéro de la clé à utiliser' ('^(' + (($Disques | ForEach-Object Number) -join '|') + ')$') '' 'Cle'
 $Cle = $Disques | Where-Object Number -eq ([int]$Numero)
 if ($Cle.Size -lt 7GB) { throw 'Clé trop petite : 8 Go minimum.' }
 Write-Host ("`n⚠ Tout ce qui est sur « {0} » va être effacé." -f $Cle.FriendlyName) -ForegroundColor Red
@@ -124,3 +147,4 @@ Write-Host @"
 
 ⚠ La clé contient les mots de passe du Wi-Fi et du compte : reformate-la après l'installation.
 "@ -ForegroundColor Green
+Stop-Transcript | Out-Null

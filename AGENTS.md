@@ -1,8 +1,44 @@
 # Consignes pour l'IA qui installe ce serveur
 
-Tu aides quelqu'un à installer **serveur-maison** sur son PC sous Ubuntu 24.04, depuis ce dossier.
+Tu aides quelqu'un à installer **serveur-maison**, depuis ce dossier.
 Il te dit en général juste « installe le serveur » : tu fais tout, sauf ce qui est marqué ✋ plus bas.
 Parle-lui en français simple, sans jargon : c'est souvent un débutant.
+
+**Où tournes-tu ?**
+- Sur **Windows** (le cas le plus courant : il t'a demandé de récupérer ce dépôt sur son PC) → tu prépares la
+  **clé USB d'installation** (section suivante). Tout le reste se fera seul sur le futur serveur.
+- Sur **Ubuntu 24.04**, sur la machine qui sera le serveur → passe directement aux [Étapes](#étapes).
+
+## Sur Windows : préparer la clé USB
+
+Le script `cle-usb/preparer-cle.ps1` fait tout : il télécharge Ubuntu Server, formate la clé et y met le dépôt et
+les réglages. Le PC qui démarrera sur la clé s'installera ensuite tout seul (Ubuntu puis le serveur).
+
+1. **Demande-lui dans la conversation**, en une fois : le nom du serveur (affiché sur le portail), le nom du compte
+   Linux (minuscules, ex. `serveur`), s'il veut les films et séries (`oui`/`non`), la sauvegarde des photos
+   (`oui`/`non`), le **nom** de son Wi-Fi s'il n'y a pas de câble pour le serveur (sur Windows :
+   `netsh wlan show interfaces`, ligne SSID, pour lui proposer celui où il est), et son adresse DuckDNS + jeton s'il
+   en a une (sinon rien). ✋ **Ne demande aucun mot de passe** : le script les lui demande lui-même.
+2. Fais-lui brancher une clé USB d'au moins 8 Go, puis `powershell -ExecutionPolicy Bypass -File
+   cle-usb\preparer-cle.ps1 -Lister`. Montre-lui la liste et fais-lui **confirmer laquelle** : elle sera effacée.
+   Préviens-le aussi que le téléchargement fait **4 Go** (Ubuntu Server 24.04.5, depuis releases.ubuntu.com).
+3. Lance (en arrière-plan si ton outil coupe les commandes longues : comptez 10 à 40 minutes) :
+   ```
+   powershell -ExecutionPolicy Bypass -File cle-usb\preparer-cle.ps1 -Nom "…" -Hote "…" -Utilisateur "…" `
+     -Films oui -Photos oui -Wifi "…" -Domaine "" -Cle <numéro>
+   ```
+   (`-Hote` : nom court en minuscules sans espace ; `-Wifi ""` si câble ; `-Jeton "…"` seulement avec un `-Domaine`.)
+   Dis-lui **avant** qu'une fenêtre va s'ouvrir : il accepte les droits administrateur, tape le mot de passe du
+   compte (deux fois), celui du Wi-Fi, puis **EFFACER** pour confirmer. La fenêtre se ferme toute seule à la fin.
+4. La commande affiche tout ce qui s'est passé dans cette fenêtre (aussi dans `cle-usb\preparation.log`).
+   Si ça a échoué, lis l'erreur, corrige, relance. Sinon, donne-lui :
+   - le **sujet ntfy** affiché : installer l'appli **ntfy** sur son téléphone et s'y abonner **maintenant** ;
+   - la suite : brancher la clé sur le futur serveur, l'allumer en appuyant sur la touche du menu de démarrage
+     (F12, F11, F10, Échap ou F2 selon la marque), choisir la clé, taper **yes** à l'unique question (⚠ le disque de
+     ce PC est effacé), retirer la clé au redémarrage. Il recevra « Serveur prêt ✅ » avec l'adresse du portail ;
+   - qu'il pourra ensuite te rappeler pour les comptes à créer (étape 4 ci-dessous, depuis le portail ou en SSH) ;
+   - de reformater la clé après l'installation (elle contient les mots de passe).
+   Supprime `cle-usb\preparation.log` à la fin.
 
 ## Règles
 

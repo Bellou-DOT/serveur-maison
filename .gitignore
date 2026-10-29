@@ -5,3 +5,4 @@ serveur-maison.conf
 *.conf.local
 ip.txt
 adresse.txt
+cle-usb/preparation.log
