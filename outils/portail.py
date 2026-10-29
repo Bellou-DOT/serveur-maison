@@ -268,7 +268,8 @@ def telechargements():
 
 # PC à réveiller depuis sa mise en veille (paquet magique, Wake on LAN / WLAN) ; vide = tuile cachée
 PC_MAC, PC_IP = C['PC_MAC'], C['PC_IP']
-DIFFUSION = str(ipaddress.ip_network(C['RESEAU_MAISON'], strict=False).broadcast_address)
+# vide tant que installer.sh n'a pas détecté le réseau : diffusion générale seulement
+DIFFUSION = str(ipaddress.ip_network(C['RESEAU_MAISON'], strict=False).broadcast_address) if C['RESEAU_MAISON'] else '255.255.255.255'
 
 
 def pc_allume():
