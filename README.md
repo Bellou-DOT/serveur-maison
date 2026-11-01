@@ -89,7 +89,20 @@ possible (Seerr, AdGuard, Tailscale). Il reste aussi, côté téléphone :
   Exit node → le serveur. Un autre appareil : installe Tailscale dessus avec le même compte.
 - **Copie des sauvegardes sur Google Drive** (facultatif) : `rclone config`, remote nommé `drive`.
 
-### Disque externe pour les films
+### Disque externe pour les films (facultatif, mais fortement conseillé)
+
+Sans disque externe, tout marche : les films et séries vont sur le disque interne du serveur (`/srv/medias-brut`).
+Mais un SSD externe est fortement conseillé :
+- **Place** : un film en bonne qualité pèse de 5 à 30 Go. Le disque interne d'un vieux portable (souvent 128 à 256 Go,
+  dont une partie prise par Ubuntu) est plein après quelques dizaines de films, et un serveur au disque système
+  plein plante.
+- **Système à l'abri** : les téléchargements écrivent beaucoup. Sur un disque à part, ils n'usent pas le disque qui
+  fait tourner le serveur, et si le disque des films a un souci, le serveur continue de marcher.
+- **Facile à changer** : quand il est plein, tu en branches un plus grand. Tes films se lisent aussi sur un autre
+  PC (format exFAT).
+
+Un **SSD** plutôt qu'un disque dur à plateaux : silencieux, plus rapide, et moins fragile s'il est branché jour et nuit.
+1 To ou plus pour être tranquille.
 
 Monte-le de façon permanente (ligne dans `/etc/fstab`, avec `nofail` pour que le serveur démarre même s'il est débranché), puis mets son dossier dans `MEDIAS_BRUT`. Exemple pour un disque exFAT :
 
