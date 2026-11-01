@@ -10,7 +10,7 @@ Tout est en français et prévu pour **Ubuntu 24.04** sur un PC dédié (8 Go de
 | 🏠 **Portail** | Une page d'accueil (`http://IP-du-serveur`) avec une tuile par service, les nouveautés, les téléchargements en cours, l'état du serveur en direct, le réveil et la mise en veille du PC. Les appareils qui ne sont pas admin voient une version simplifiée. |
 | 🎬 **Films et séries** | Jellyfin pour regarder, Seerr pour demander un film, Radarr/Sonarr/Prowlarr pour aller le chercher, Transmission pour le télécharger. Un film supprimé dans Jellyfin est supprimé partout (fichier, Radarr, Seerr, téléchargement). Au-delà de 10 Go, le téléchargement attend ton accord par notification. |
 | 📸 **Photos** | Immich : sauvegarde automatique des photos du téléphone. |
-| 🔒 **Accès** | VPN WireGuard (QR code à scanner) pour tout utiliser depuis l'extérieur, AdGuard Home qui bloque les pubs sur le VPN, CrowdSec qui bloque les attaques. Les outils d'admin ne répondent qu'au VPN et aux appareils déclarés. |
+| 🔒 **Accès** | VPN Tailscale (gratuit, aucun port à ouvrir dans la box) pour tout utiliser depuis l'extérieur, et le serveur comme sortie internet sur un Wi-Fi public ; AdGuard Home qui bloque les pubs, même dehors ; CrowdSec qui bloque les attaques. Les outils d'admin ne répondent qu'à Tailscale et aux appareils déclarés. |
 | 🔔 **Surveillance** | Notifications sur le téléphone (appli ntfy) : disque plein, surchauffe, disque en mauvaise santé, service en panne, coupure de courant, téléchargement fini. Mises à jour des services installées toutes seules après vérification, avec un seul résumé par jour. Sauvegarde des réglages chaque nuit. |
 
 ## Installation
@@ -68,7 +68,8 @@ sudo nano /etc/serveur-maison.conf     # tes réglages : noms, adresse IP, ce qu
 
 Avant de commencer :
 - **Réserve une adresse IP fixe** pour le serveur dans ta box (bail DHCP statique), et mets-la dans `IP_SERVEUR`.
-- **Ouvre le port UDP 51820** dans la box vers le serveur (VPN). C'est le seul.
+- **Crée un compte [Tailscale](https://tailscale.com)** (gratuit) : le serveur et ton téléphone s'y connecteront.
+  Aucun port n'est à ouvrir dans la box.
 
 Le fichier de réglages est commenté ligne par ligne (modèle : [config.exemple](config.exemple)). On peut relancer
 `./installer.sh` autant de fois qu'on veut : rien de ce qui existe n'est écrasé.
@@ -76,10 +77,12 @@ Le fichier de réglages est commenté ligne par ligne (modèle : [config.exemple
 À la fin, l'installation a déjà relié les services entre eux (bibliothèques Jellyfin, Transmission dans Radarr et Sonarr,
 Prowlarr, garde-fou des gros films, notifications…) et affiche **la liste de ce qui reste à faire par toi** :
 surtout créer tes comptes. Après chaque étape, relance `~/outils/configurer.py` : il termine ce qui vient de devenir
-possible (Seerr, AdGuard). Il reste aussi, côté téléphone :
+possible (Seerr, AdGuard, Tailscale). Il reste aussi, côté téléphone :
 
 - **Notifications** : appli **ntfy**, abonne-toi au sujet affiché à la fin de l'installation.
-- **VPN** : scanne `~/vpn/telephone.png` dans l'appli **WireGuard**. Un autre appareil : `~/outils/vpn-ajouter.sh portable`.
+- **VPN** : appli **Tailscale**, connectée au même compte que le serveur. Depuis dehors, les adresses sont les mêmes
+  qu'à la maison (`http://IP-du-serveur`…). Pour passer par la connexion de la maison sur un Wi-Fi public :
+  Exit node → le serveur. Un autre appareil : installe Tailscale dessus avec le même compte.
 - **Copie des sauvegardes sur Google Drive** (facultatif) : `rclone config`, remote nommé `drive`.
 
 ### Disque externe pour les films
@@ -110,9 +113,11 @@ powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File pc-agent.ps1 -Serve
 - Le compte qui installe peut utiliser `sudo` sans mot de passe (nécessaire aux tâches de nuit) : utilise un PC dédié au serveur.
   Aucun service joignable par le réseau ne tourne sous ce compte : le portail, Transmission, Radarr, Sonarr et Prowlarr
   tournent sous le compte `medias`, qui n'a aucun droit d'administration.
-- Rien d'autre que le VPN n'est ouvert sur Internet, y compris en IPv6 (le pare-feu du serveur n'accepte que le réseau
-  de la maison, même si la box laisse passer). Les outils d'admin (Radarr, Sonarr, Prowlarr, Transmission, AdGuard)
-  sont réservés au VPN et aux adresses MAC de `ADMINS_MAC`.
+- Rien n'est ouvert sur Internet, y compris en IPv6 (le pare-feu du serveur n'accepte que le réseau de la maison,
+  même si la box laisse passer) : Tailscale passe sans port ouvert. Les outils d'admin (Radarr, Sonarr, Prowlarr,
+  Transmission, AdGuard) sont réservés à Tailscale et aux adresses MAC de `ADMINS_MAC`.
+- Tailscale : seuls les appareils de ton compte entrent. La société Tailscale met les appareils en relation, mais ne
+  voit pas ce qui passe dans le tunnel (chiffré de bout en bout).
 - Le portail refuse les adresses qui ne sont pas les siennes (protection contre le « DNS rebinding ») et, pour
   Transmission, tout ordre qui lancerait un programme ou écrirait hors du dossier des médias.
 - Les mots de passe générés sont dans des fichiers lisibles par ton compte et le compte `medias` seuls

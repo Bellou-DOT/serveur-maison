@@ -171,12 +171,12 @@
 
   <h2>Maison</h2>
   <div class="grille">
-    <a class="tuile admin" style="--c:var(--cyan)" data-vpn="3000"><span class="ico">🛡️</span><span><b>Bloqueur de pubs</b><small>AdGuard · VPN</small></span></a>
+    <a class="tuile admin" style="--c:var(--cyan)" data-port="3000"><span class="ico">🛡️</span><span><b>Bloqueur de pubs</b><small>AdGuard</small></span></a>
     <a class="tuile admin" style="--c:var(--rose)" href="/serveur"><span class="ico">📊</span><span><b>Serveur en direct</b><small>Température, processeur, disques</small></span></a>
     <a class="tuile admin" id="tuilePc" href="#pc" style="--c:var(--violet)"><span class="ico">💻</span><span><b>Mon PC</b><small id="pcEtat">Allumer à distance</small></span><i class="point"></i></a>
   </div>
 
-  <footer>{{NOM}} · accessible à la maison et par le VPN</footer>
+  <footer>{{NOM}} · accessible à la maison et par Tailscale</footer>
 </main>
 <nav id="barre" hidden aria-label="Navigation">
   <button type="button" id="retour">🏠 {{NOM}}</button>
@@ -190,7 +190,6 @@ const $ = (id) => document.getElementById(id);
 const hote = location.hostname;
 const lien = (port, chemin = '/') => 'http://' + hote + ':' + port + chemin;
 for (const a of document.querySelectorAll('[data-port]')) a.href = lien(a.dataset.port, a.dataset.chemin);
-for (const a of document.querySelectorAll('[data-vpn]')) a.href = 'http://10.8.0.1:' + a.dataset.vpn + '/';
 // Transmission refuse d'être affiché dans une autre page : le portail le relaie depuis sa propre adresse.
 document.querySelector('[data-port="9091"]').href = '/transmission/web/';
 

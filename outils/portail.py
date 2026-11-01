@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Portail du serveur maison (http://HOTE, maison + VPN) et garde-fou des gros films.
+"""Portail du serveur maison (http://HOTE, maison + Tailscale) et garde-fou des gros films.
 
   portail.py            sert le portail sur le port 80 (service « portail »)
   portail.py --grab     appelé par Radarr à chaque film envoyé à Transmission (ajouté en pause) :
@@ -347,11 +347,19 @@ def systeme():
 
 
 PARE_FEU = Path('/etc/serveur-maison-admin.nft')  # même liste d'appareils admin que le pare-feu
+TAILSCALE = ipaddress.ip_network('100.64.0.0/10')  # adresses Tailscale : seulement les appareils du compte du propriétaire
+
+
+def tailscale(ip):
+    try:
+        return ipaddress.ip_address(ip) in TAILSCALE
+    except ValueError:
+        return False
 
 
 def est_admin(ip):
-    """Le serveur, le VPN, ou un appareil de la maison dont l'adresse MAC est dans la liste du pare-feu."""
-    if ip == '127.0.0.1' or ip.startswith('10.8.0.'):
+    """Le serveur, un appareil Tailscale, ou un appareil de la maison dont l'adresse MAC est dans la liste du pare-feu."""
+    if ip == '127.0.0.1' or tailscale(ip):
         return True
     try:
         macs = set(re.findall(r'(?:[0-9a-f]{2}:){5}[0-9a-f]{2}', PARE_FEU.read_text().lower()))
@@ -373,11 +381,13 @@ def page(nom='portail.html'):
 RELAIS = 'http://127.0.0.1:9091'  # Transmission interdit d'être affiché ailleurs que chez lui : on le sert depuis le portail
 ENTETES_RELAYES = ('Authorization', 'Content-Type', 'X-Transmission-Session-Id', 'Accept', 'If-None-Match')
 # Noms sous lesquels on joint le portail : tout autre nom (« DNS rebinding » depuis une page web piégée) est refusé
-HOTES = {C['HOTE'], *(f"{C['HOTE']}.{x}" for x in ('lan', 'home', 'local')), C['IP_SERVEUR'], '10.8.0.1', 'localhost', '127.0.0.1'} - {''}
+HOTES = {C['HOTE'], *(f"{C['HOTE']}.{x}" for x in ('lan', 'home', 'local')), C['IP_SERVEUR'], 'localhost', '127.0.0.1'} - {''}
 
 
 def hote_autorise(entete):
-    return (entete or '').rsplit(':', 1)[0].lower() in HOTES
+    # Par Tailscale : son adresse 100.x.y.z ou son nom HOTE.<réseau>.ts.net (MagicDNS)
+    nom = (entete or '').rsplit(':', 1)[0].lower()
+    return nom in HOTES or tailscale(nom) or (nom.startswith(f"{C['HOTE']}.") and nom.endswith('.ts.net'))
 
 
 def rpc_autorise(corps):
@@ -529,10 +539,11 @@ def test():
     ATTENTE = Path('/tmp/attente-test.json')
     ecrire_attente({'abcdefghijkl': {'empreinte': 'x', 'titre': 'T', 'taille': 1}})
     assert decider('inconnu-000000', True).startswith('Cette demande')
-    assert est_admin('127.0.0.1') and est_admin('10.8.0.2') and not est_admin('192.168.1.250')
+    assert est_admin('127.0.0.1') and est_admin('100.87.22.1') and not est_admin('192.168.1.250') and not est_admin('10.8.0.2')
     ATTENTE.unlink()
     assert len(bytes([255]) * 6 + bytes.fromhex('aa:bb:cc:dd:ee:ff'.replace(':', '')) * 16) == 102
-    assert hote_autorise('127.0.0.1:80') and hote_autorise('10.8.0.1') and not hote_autorise('pirate.example.com')
+    assert hote_autorise('127.0.0.1:80') and hote_autorise('100.122.1.2') and not hote_autorise('pirate.example.com')
+    assert hote_autorise(f"{C['HOTE']}.tail1234.ts.net") and not hote_autorise('pirate.tail1234.ts.net')
     assert not hote_autorise(None) and not hote_autorise('')
     ok = '{"method": "torrent-add", "arguments": {"filename": "x", "download-dir": "%s/Téléchargements"}}' % C['MEDIAS_BRUT']
     assert rpc_autorise(ok.encode()) and rpc_autorise(b'{"method": "torrent-get", "arguments": {"fields": ["id"]}}')

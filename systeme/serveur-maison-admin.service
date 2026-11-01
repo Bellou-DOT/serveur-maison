@@ -1,5 +1,5 @@
 [Unit]
-Description=Pare-feu : outils d'admin réservés aux appareils admin et au VPN
+Description=Pare-feu : outils d'admin réservés aux appareils admin et à Tailscale
 After=network-pre.target
 
 [Service]

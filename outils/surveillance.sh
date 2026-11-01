@@ -73,7 +73,7 @@ if [ "$(cat $B/status 2>/dev/null)" = Discharging ]; then
   fi
 fi
 
-declare -A NOMS=([wg-quick@wg0]="Le VPN" [AdGuardHome]="Le bloqueur de pubs" [jellyfin]="Jellyfin" [smbd]="Le dossier partagé des médias" [transmission-daemon]="Transmission" [sonarr]="Sonarr" [radarr]="Radarr" [docker]="Docker (Seerr)" [prowlarr]="Prowlarr" [portail]="Le portail $NOM_PORTAIL" [serveur-maison-admin]="Le pare-feu des outils admin" [crowdsec]="Le détecteur d attaques (CrowdSec)" [crowdsec-firewall-bouncer]="Le bloqueur d attaques (CrowdSec)")
+declare -A NOMS=([tailscaled]="Le VPN (Tailscale)" [AdGuardHome]="Le bloqueur de pubs" [jellyfin]="Jellyfin" [smbd]="Le dossier partagé des médias" [transmission-daemon]="Transmission" [sonarr]="Sonarr" [radarr]="Radarr" [docker]="Docker (Seerr)" [prowlarr]="Prowlarr" [portail]="Le portail $NOM_PORTAIL" [serveur-maison-admin]="Le pare-feu des outils admin" [crowdsec]="Le détecteur d attaques (CrowdSec)" [crowdsec-firewall-bouncer]="Le bloqueur d attaques (CrowdSec)")
 for s in "${!NOMS[@]}"; do
   systemctl is-enabled --quiet "$s" 2>/dev/null || continue  # composant pas installé ici
   systemctl is-active --quiet "$s" || ajouter "$s" high "${NOMS[$s]} ne tourne plus ($s)."

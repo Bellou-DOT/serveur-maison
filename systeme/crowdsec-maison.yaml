@@ -1,9 +1,9 @@
 name: serveur-maison/whitelist
-description: "Ne jamais bloquer la maison, le VPN, Docker ni le serveur lui-même"
+description: "Ne jamais bloquer la maison, Tailscale, Docker ni le serveur lui-même"
 whitelist:
-  reason: "réseau de la maison / VPN"
+  reason: "réseau de la maison / Tailscale"
   cidr:
     - "@RESEAU@"
-    - "10.8.0.0/24"
+    - "100.64.0.0/10"   # Tailscale
     - "172.16.0.0/12"
     - "127.0.0.0/8"

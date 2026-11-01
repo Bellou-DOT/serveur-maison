@@ -7,7 +7,8 @@
   - Radarr / Sonarr : dossier racine, Transmission (en pause), garde-fou des gros films, notification de fin.
   - Prowlarr : relié à Radarr et Sonarr (les sources de téléchargement restent à ajouter par l'utilisateur).
   - Seerr : relié à Radarr et Sonarr (une fois connecté à Jellyfin par l'utilisateur).
-  - AdGuard Home : écoute sur le VPN et nom HOTE -> 10.8.0.1 (une fois son assistant terminé).
+  - AdGuard Home : écoute sur IP_SERVEUR et nom HOTE -> IP_SERVEUR (une fois son assistant terminé).
+  - Tailscale : vérifie que le serveur est connecté, que ses routes sont approuvées et que sa clé n'expire pas.
 --test : vérifications sans réseau.
 """
 import json
@@ -185,21 +186,35 @@ def seerr():
 
 # ---------- AdGuard Home ----------
 
-def adguard_reglages(r, hote):
-    """Modifie les réglages d'AdGuard (dict du YAML) ; vrai s'il y a eu un changement."""
+ANCIEN_VPN = '10.8.0.1'  # adresse de l'ancien VPN WireGuard, retirée des installations d'avant Tailscale
+
+
+def adguard_reglages(r, hote, ip):
+    """Modifie les réglages d'AdGuard (dict du YAML) ; vrai s'il y a eu un changement.
+    Il doit répondre sur l'adresse du serveur : c'est le DNS que Tailscale donne aux appareils, par le réseau de la maison."""
     change = False
     hotes = r.setdefault('dns', {}).setdefault('bind_hosts', [])
-    if '0.0.0.0' not in hotes and '10.8.0.1' not in hotes:
-        hotes.append('10.8.0.1')
+    if ANCIEN_VPN in hotes:
+        hotes.remove(ANCIEN_VPN)
+        change = True
+    if '0.0.0.0' not in hotes and ip not in hotes:
+        hotes.append(ip)
         change = True
     # rangement des réécritures : « filtering » dans les versions récentes, « dns » dans les anciennes
     section = r['filtering'] if 'rewrites' in r.get('filtering', {}) or 'filtering' in r else r['dns']
     reecritures = section.setdefault('rewrites', []) or []
     section['rewrites'] = reecritures
+    for x in reecritures:
+        if x.get('answer') == ANCIEN_VPN:
+            x['answer'] = ip
+            change = True
     for nom in (hote, f'{hote}.lan'):
         if not any(x.get('domain') == nom for x in reecritures):
-            reecritures.append({'domain': nom, 'answer': '10.8.0.1', 'enabled': True})
+            reecritures.append({'domain': nom, 'answer': ip, 'enabled': True})
             change = True
+    if r.get('http', {}).get('address', '').startswith(ANCIEN_VPN + ':'):
+        r['http']['address'] = r['http']['address'].replace(ANCIEN_VPN, ip, 1)
+        change = True
     return change
 
 
@@ -211,13 +226,43 @@ def adguard():
                     "(interfaces : laisse le choix proposé ; si le port 53 est refusé, choisis l'adresse "
                     f"{C['IP_SERVEUR']})")
     r = yaml.safe_load(subprocess.run(['sudo', '-n', 'cat', str(fichier)], capture_output=True, text=True, check=True).stdout)
-    if not adguard_reglages(r, C['HOTE']):
-        return dire('deja', f"AdGuard Home : VPN et nom {C['HOTE']}")
+    if not adguard_reglages(r, C['HOTE'], C['IP_SERVEUR']):
+        return dire('deja', f"AdGuard Home : adresse du serveur et nom {C['HOTE']}")
     subprocess.run(['sudo', '-n', 'systemctl', 'stop', 'AdGuardHome'], check=True)
     subprocess.run(['sudo', '-n', 'tee', str(fichier)], input=yaml.safe_dump(r, allow_unicode=True, sort_keys=False),
                    text=True, check=True, stdout=subprocess.DEVNULL)
     subprocess.run(['sudo', '-n', 'systemctl', 'start', 'AdGuardHome'], check=True)
-    dire('fait', f"AdGuard Home : écoute sur le VPN, http://{C['HOTE']} → serveur")
+    dire('fait', f"AdGuard Home : écoute sur {C['IP_SERVEUR']}, http://{C['HOTE']} → serveur")
+
+
+# ---------- Tailscale ----------
+
+CONSOLE = 'https://login.tailscale.com/admin'
+
+
+def tailscale_a_faire(s, reseau, ip):
+    """Ce qui reste à régler à la main, d'après « tailscale status --json » (la console ne se règle pas sans clé d'API)."""
+    if s.get('BackendState') != 'Running':
+        lien = s.get('AuthURL') or 'le lien affiché par : sudo tailscale up'
+        return [f'Tailscale : connecte le serveur à ton compte (crée-le si besoin, c\'est gratuit) en ouvrant {lien}']
+    moi, faire = s.get('Self', {}), []
+    if reseau not in (moi.get('PrimaryRoutes') or []) or not moi.get('ExitNodeOption'):
+        faire.append(f'Tailscale : sur {CONSOLE}/machines, menu « … » du serveur → Edit route settings : coche {reseau} '
+                     f'et « Use as exit node ». Puis sur {CONSOLE}/dns : Add nameserver → Custom → {ip}, '
+                     'et active « Override DNS servers » (pubs bloquées partout)')
+    if moi.get('KeyExpiry'):
+        faire.append(f'Tailscale : sur {CONSOLE}/machines, menu « … » du serveur → Disable key expiry '
+                     '(sinon il se déconnecte au bout de 6 mois)')
+    return faire
+
+
+def tailscale():
+    r = subprocess.run(['tailscale', 'status', '--json'], capture_output=True, text=True)
+    faire = tailscale_a_faire(json.loads(r.stdout or '{}'), C['RESEAU_MAISON'], C['IP_SERVEUR'])
+    for t in faire:
+        dire('toi', t)
+    if not faire:
+        dire('deja', f"Tailscale : connecté, accès à {C['RESEAU_MAISON']} et sortie internet approuvés")
 
 
 def main():
@@ -228,6 +273,7 @@ def main():
         etape('Prowlarr', prowlarr)
         etape('Seerr', seerr)
     etape('AdGuard Home', adguard)
+    etape('Tailscale', tailscale)
     if C.get('AVEC_MEDIAS') == 'oui':
         A_FAIRE.append(f"Radarr (:7878), Sonarr (:8989), Prowlarr (:9696) : à la première ouverture de chacun sur "
                        f"http://{C['IP_SERVEUR']}, choisis ton identifiant et ton mot de passe")
@@ -245,11 +291,21 @@ def test():
     assert r['name'] == 'T' and r['fields'][0]['value'] == '127.0.0.1' and r['fields'][1]['value'] == 1
     assert 'id' not in r and r['enable'] and m['fields'][0]['value'] == 'x'  # le modèle n'est pas modifié
     a = {'dns': {'bind_hosts': ['127.0.0.1']}, 'filtering': {'rewrites': []}}
-    assert adguard_reglages(a, 'monserv') and a['dns']['bind_hosts'] == ['127.0.0.1', '10.8.0.1']
+    ip = '192.168.1.20'
+    assert adguard_reglages(a, 'monserv', ip) and a['dns']['bind_hosts'] == ['127.0.0.1', ip]
     assert [x['domain'] for x in a['filtering']['rewrites']] == ['monserv', 'monserv.lan']
-    assert not adguard_reglages(a, 'monserv')  # relancé : rien à changer
+    assert not adguard_reglages(a, 'monserv', ip)  # relancé : rien à changer
     b = {'dns': {'bind_hosts': ['0.0.0.0'], 'rewrites': None}}
-    assert adguard_reglages(b, 'x') and b['dns']['bind_hosts'] == ['0.0.0.0'] and len(b['dns']['rewrites']) == 2
+    assert adguard_reglages(b, 'x', ip) and b['dns']['bind_hosts'] == ['0.0.0.0'] and len(b['dns']['rewrites']) == 2
+    # installation d'avant Tailscale : tout ce qui visait l'ancien VPN passe sur l'adresse du serveur
+    v = {'http': {'address': '10.8.0.1:3000'}, 'dns': {'bind_hosts': ['127.0.0.1', ip, '10.8.0.1']},
+         'filtering': {'rewrites': [{'domain': 'monserv', 'answer': '10.8.0.1', 'enabled': True}]}}
+    assert adguard_reglages(v, 'monserv', ip) and v['dns']['bind_hosts'] == ['127.0.0.1', ip]
+    assert v['http']['address'] == ip + ':3000' and {x['answer'] for x in v['filtering']['rewrites']} == {ip}
+    reseau = '192.168.1.0/24'
+    assert 'https://login.tailscale.com/a/x' in tailscale_a_faire({'BackendState': 'NeedsLogin', 'AuthURL': 'https://login.tailscale.com/a/x'}, reseau, ip)[0]
+    assert len(tailscale_a_faire({'BackendState': 'Running', 'Self': {'KeyExpiry': '2027-05-01'}}, reseau, ip)) == 2
+    assert tailscale_a_faire({'BackendState': 'Running', 'Self': {'PrimaryRoutes': [reseau], 'ExitNodeOption': True}}, reseau, ip) == []
     print('test OK')
 
 

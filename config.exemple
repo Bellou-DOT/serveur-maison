@@ -3,7 +3,7 @@
 
 # ---------- Noms ----------
 NOM_PORTAIL="MonServ"              # titre du portail web et des notifications
-HOTE="monserv"                     # le portail répond sur http://monserv (par le DNS du VPN)
+HOTE="monserv"                     # le portail répond sur http://monserv (DNS d'AdGuard) ; nom du serveur dans Tailscale
 
 # ---------- Réseau de la maison ----------
 # Vides = détectés à l'installation. Réserve ensuite cette adresse dans la box (bail DHCP statique).
@@ -12,8 +12,13 @@ RESEAU_MAISON=""                   # ex. 192.168.1.0/24
 INTERFACE=""                       # carte réseau (commande : ip -br link), ex. wlo1
 
 # Appareils de la maison qui ont accès aux outils d'admin (Radarr, Sonarr, Prowlarr, Transmission, AdGuard)
-# sans passer par le VPN : leurs adresses MAC, séparées par des espaces. Le VPN y a toujours accès.
+# sans passer par Tailscale : leurs adresses MAC, séparées par des espaces. Tailscale y a toujours accès.
 ADMINS_MAC=""
+
+# ---------- VPN Tailscale ----------
+# Vide = connexion au compte Tailscale par un lien (donné à la fin de l'installation).
+# Ou une clé d'authentification (https://login.tailscale.com/admin/settings/keys) pour une installation sans écran.
+TAILSCALE_CLE=""
 
 # PC à réveiller / mettre en veille depuis le portail (tuile « Mon PC ») ; vide = tuile cachée
 PC_MAC=""

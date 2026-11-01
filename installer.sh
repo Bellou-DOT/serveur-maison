@@ -43,7 +43,7 @@ cron() { # ajoute (ou remplace) la ligne de crontab qui contient $1
 
 etape "Paquets de base"
 sudo apt-get update -qq
-paquets curl ca-certificates python3 python3-yaml nftables wireguard qrencode smartmontools
+paquets curl ca-certificates python3 python3-yaml nftables smartmontools
 sudo timedatectl set-timezone "$FUSEAU"
 # Les scripts de nuit (cron) relancent des services et lisent les bases : sudo sans mot de passe pour ce compte.
 echo "$U ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/serveur-maison >/dev/null
@@ -81,18 +81,26 @@ cron outils/sauvegarde.sh "0 5 * * * $H/outils/sauvegarde.sh"
 cron outils/mises-a-jour.py "23 * * * * $H/outils/mises-a-jour.py >> $H/.surveillance/mises-a-jour.log 2>&1"
 cron outils/pare-feu-ipv6.sh "*/5 * * * * sudo -n $H/outils/pare-feu-ipv6.sh"
 
-etape "VPN WireGuard (10.8.0.0/24, port UDP 51820)"
-if ! sudo test -f /etc/wireguard/wg0.conf; then
-  CLE=$(wg genkey)
-  printf '# VPN maison : chaque appareil a sa section [Peer] (ajout : ~/outils/vpn-ajouter.sh NOM)\n[Interface]\nAddress = 10.8.0.1/24\nListenPort = 51820\nPrivateKey = %s\n' "$CLE" \
-    | sudo tee /etc/wireguard/wg0.conf >/dev/null
-  sudo chmod 600 /etc/wireguard/wg0.conf
+etape "VPN Tailscale (accès depuis l'extérieur, aucun port à ouvrir dans la box)"
+if ! command -v tailscale >/dev/null; then
+  sudo install -d -m 755 /usr/share/keyrings
+  curl -fsSL "https://pkgs.tailscale.com/stable/$ID/$VERSION_CODENAME.noarmor.gpg" | sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+  curl -fsSL "https://pkgs.tailscale.com/stable/$ID/$VERSION_CODENAME.tailscale-keyring.list" | sudo tee /etc/apt/sources.list.d/tailscale.list >/dev/null
+  sudo apt-get update -qq
+  paquets tailscale
 fi
-sudo systemctl enable --now wg-quick@wg0 >/dev/null
-mkdir -p "$H/vpn"
-[ -e "$H/vpn/telephone.conf" ] || "$H/outils/vpn-ajouter.sh" telephone
+# Le serveur relaie les appareils Tailscale vers la maison et peut leur servir de sortie internet.
+# (Ubuntu gère les annonces IPv6 de la box hors du noyau : son adresse IPv6 ne bouge pas.)
+printf 'net.ipv4.ip_forward = 1\nnet.ipv6.conf.all.forwarding = 1\n' | sudo tee /etc/sysctl.d/99-tailscale.conf >/dev/null
+sudo sysctl -q -p /etc/sysctl.d/99-tailscale.conf
+sudo systemctl enable --now tailscaled >/dev/null
+if ! tailscale status >/dev/null 2>&1; then
+  # Sans clé (TAILSCALE_CLE), la connexion au compte se fait par un lien : configurer.py le donne à la fin.
+  sudo timeout 20 tailscale up --hostname="$HOTE" --advertise-routes="$RESEAU_MAISON" --advertise-exit-node \
+    --accept-dns=false ${TAILSCALE_CLE:+--auth-key="$TAILSCALE_CLE"} >/dev/null 2>&1 || true
+fi
 
-etape "AdGuard Home (bloqueur de pubs, et nom « $HOTE » pour le VPN)"
+etape "AdGuard Home (bloqueur de pubs, et nom « $HOTE » sur le réseau)"
 if [ ! -x /opt/AdGuardHome/AdGuardHome ]; then
   curl -fsSL https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sudo sh -s -- -o /opt >/dev/null
 fi
@@ -177,7 +185,7 @@ EOF
   etape "Partage réseau des médias (Samba : \\\\$IP_SERVEUR\\medias)"
   paquets samba
   if ! grep -q '^\[medias\]' /etc/samba/smb.conf; then
-    printf '\n[medias]\n   path = %s\n   valid users = %s\n   read only = no\n   force group = jellyfin\n   create mask = 0664\n   directory mask = 2775\n   hosts allow = 127.0.0.1 %s 10.8.0.0/24\n   hosts deny = 0.0.0.0/0\n' \
+    printf '\n[medias]\n   path = %s\n   valid users = %s\n   read only = no\n   force group = jellyfin\n   create mask = 0664\n   directory mask = 2775\n   hosts allow = 127.0.0.1 %s 100.64.0.0/10\n   hosts deny = 0.0.0.0/0\n' \
       "$MEDIAS_BRUT" "$U" "$RESEAU_MAISON" | sudo tee -a /etc/samba/smb.conf >/dev/null
     sudo systemctl restart smbd
   fi
@@ -214,7 +222,7 @@ python3 "$H/outils/vitrine.py" --test
 "$H/outils/surveillance.sh" --test
 python3 "$H/outils/configurer.py" --test
 
-etape "Réglages des services (liens entre eux, bibliothèques, VPN…)"
+etape "Réglages des services (liens entre eux, bibliothèques, Tailscale…)"
 if oui AVEC_MEDIAS; then  # au premier démarrage, Jellyfin et les *arr mettent un moment à répondre
   for url in http://127.0.0.1:8096/health http://127.0.0.1:7878/ping http://127.0.0.1:8989/ping http://127.0.0.1:9696/ping; do
     for _ in $(seq 90); do curl -fs -m 2 -o /dev/null "$url" && break; sleep 2; done
@@ -225,7 +233,7 @@ python3 "$H/outils/configurer.py"
 cat <<EOF
 
 ✅ Installation terminée. Fais les étapes « Reste à faire par toi » ci-dessus, puis relance ~/outils/configurer.py.
-   Portail       : http://$IP_SERVEUR  (et http://$HOTE par le VPN)
+   Portail       : http://$IP_SERVEUR  (aussi depuis dehors, par Tailscale)
    Notifications : appli ntfy, abonne-toi au sujet « $(cat "$H/.surveillance/sujet") » (une notification d'essai vient de partir)
-   VPN           : $H/vpn/telephone.png (QR code à scanner dans l'appli WireGuard)
+   VPN           : appli Tailscale sur le téléphone, connectée au même compte que le serveur
 EOF

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Sauvegarde des réglages de tous les services (appelée par sauvegarde.sh chaque nuit, avant la copie Google Drive).
 # Bases SQLite copiées à chaud proprement (API de sauvegarde SQLite), sans les affiches ni les caches retéléchargeables.
-# Contient des secrets (clés WireGuard, mots de passe, clés d'API) : archive lisible par le propriétaire seul, Drive privé.
+# Contient des secrets (mots de passe, clés d'API) : archive lisible par le propriétaire seul, Drive privé.
 # Restauration : sudo tar xzf config-….tar.gz -C /   (les bases sont dans bases/, à remettre à la main).
 set -e
 SORTIE="$HOME/sauvegardes/config-$(date +%F-%Hh%M).tar.gz"
@@ -24,13 +24,13 @@ FICHIERS=(
   /etc/jellyfin /var/lib/jellyfin/root /var/lib/jellyfin/plugins/configurations
   /var/lib/radarr/config.xml /var/lib/sonarr/config.xml /var/lib/prowlarr/config.xml /var/lib/seerr/settings.json
   /opt/immich/.env /opt/immich/docker-compose.yml /opt/immich/docker-compose.override.yml
-  /opt/AdGuardHome/AdGuardHome.yaml /etc/wireguard /etc/samba/smb.conf /etc/serveur-maison-admin.nft /etc/serveur-maison.conf
+  /opt/AdGuardHome/AdGuardHome.yaml /etc/samba/smb.conf /etc/sysctl.d/99-tailscale.conf /etc/serveur-maison-admin.nft /etc/serveur-maison.conf
   /etc/crowdsec/config.yaml /etc/crowdsec/local_api_credentials.yaml /etc/crowdsec/parsers/s02-enrich/maison-whitelist.yaml
   /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
   /etc/systemd/system/{AdGuardHome,serveur-maison-admin,portail,prowlarr,radarr,sonarr}.service
   /etc/systemd/system/transmission-daemon.service.d
   "$HOME/outils" /var/lib/medias/transmission/settings.json /var/lib/medias/.transmission-mdp "$HOME/.config/rclone"
-  "$HOME/.surveillance" "$HOME/vpn"
+  "$HOME/.surveillance"
 )
 crontab -l > "$T/crontab.txt"
 # Chemins absents ignorés (un service désinstallé ne doit pas faire échouer la sauvegarde de la nuit)

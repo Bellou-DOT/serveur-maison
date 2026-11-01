@@ -48,7 +48,7 @@ les réglages. Le PC qui démarrera sur la clé s'installera ensuite tout seul (
   propose pas et ne les configure pas.
 - **Rien d'irréversible sans son accord** : formater ou monter un disque, modifier `/etc/fstab`, effacer des fichiers.
   Montre ce que tu vas faire et attends un « oui ».
-- Tout ce que l'installation crée de secret (mots de passe générés, clés du VPN) reste sur le serveur :
+- Tout ce que l'installation crée de secret (mots de passe générés, clé Tailscale) reste sur le serveur :
   ne l'affiche pas en entier sans raison.
 
 ## Étapes
@@ -59,11 +59,12 @@ les réglages. Le PC qui démarrera sur la clé s'installera ensuite tout seul (
 2. **Remplir les réglages.** Lance `./installer.sh` une première fois : il crée `/etc/serveur-maison.conf`.
    Remplis-le toi-même (avec `sudo`) en devinant tout ce qui peut l'être, puis montre-lui le résultat :
    - `IP_SERVEUR`, `INTERFACE`, `RESEAU_MAISON` : `ip -4 -br addr`, `ip route` (interface de la route par défaut).
-     Dis-lui de **réserver cette adresse dans sa box** (bail DHCP statique) et de **rediriger le port UDP 51820**
-     vers elle (VPN). Ne continue pas tant qu'il n'a pas confirmé, ou explique que le VPN ne marchera pas depuis dehors.
+     Dis-lui de **réserver cette adresse dans sa box** (bail DHCP statique). Aucun port n'est à ouvrir.
+   - Demande-lui de **créer un compte Tailscale** (gratuit, https://tailscale.com) s'il n'en a pas : ne le crée pas
+     pour lui. `TAILSCALE_CLE` reste vide : il connectera le serveur par un lien à la fin.
    - Ne lui demande que : le nom de son serveur (`NOM_PORTAIL`, `HOTE` en minuscules sans espace), s'il veut les films
      (`AVEC_MEDIAS`) et les photos (`AVEC_PHOTOS`).
-   - `ADMINS_MAC` : l'adresse MAC du PC ou téléphone d'où il administrera sans VPN (sur Windows : `getmac /v`,
+   - `ADMINS_MAC` : l'adresse MAC du PC ou téléphone d'où il administrera sans Tailscale (sur Windows : `getmac /v`,
      sur iPhone : Réglages → Wi-Fi → (i), en désactivant l'adresse privée pour ce réseau). Peut rester vide.
    - `PC_MAC` / `PC_IP` seulement s'il veut réveiller son PC à distance (voir README).
    - **Disque externe pour les films** : `lsblk -f`. S'il en a un, propose une ligne `/etc/fstab` (modèle dans le
@@ -82,16 +83,18 @@ les réglages. Le PC qui démarrera sur la clé s'installera ensuite tout seul (
    4. Seerr (connexion avec son compte Jellyfin ; adresse de Jellyfin : `172.17.0.1`, port `8096`) ;
    5. AdGuard Home (assistant sur le port 3000) ;
    6. Immich (compte admin) ;
-   7. `sudo smbpasswd -a $USER` pour le dossier partagé (il tape lui-même le mot de passe).
+   7. `sudo smbpasswd -a $USER` pour le dossier partagé (il tape lui-même le mot de passe) ;
+   8. Tailscale : il ouvre le lien de connexion du serveur, puis fait les réglages de la console que donne
+      `configurer.py` (routes et sortie internet, expiration de la clé, DNS = `IP_SERVEUR`).
 
    Après chaque étape, relance `~/outils/configurer.py` : il relie ce qui vient de devenir possible
-   (Seerr ↔ Radarr/Sonarr, AdGuard ↔ VPN…).
+   (Seerr ↔ Radarr/Sonarr, AdGuard, Tailscale…).
 
 5. **Téléphone** :
    - appli **ntfy** : abonnement au sujet de `~/.surveillance/sujet` (envoie une notification d'essai avec
      `~/outils/surveillance.sh --test`) ;
-   - appli **WireGuard** : il scanne `~/vpn/telephone.png`. Pour l'afficher dans le terminal :
-     `qrencode -t ansiutf8 < ~/vpn/telephone.conf`. Autre appareil : `~/outils/vpn-ajouter.sh <nom>`.
+   - appli **Tailscale**, connectée au même compte que le serveur. Test en 4G (Wi-Fi coupé) : `http://IP_SERVEUR`
+     doit s'ouvrir.
 
 6. **Vérifier** : `systemctl --failed`, `python3 ~/outils/portail.py --test`, ouvre `http://IP_SERVEUR` (curl), et
    `~/outils/configurer.py` doit n'avoir plus que des « déjà fait ». Termine par un récapitulatif : les adresses
@@ -102,8 +105,9 @@ les réglages. Le PC qui démarrera sur la clé s'installera ensuite tout seul (
 - Réglages : `/etc/serveur-maison.conf` (relancer `./installer.sh` après un changement).
 - Journaux : `journalctl -u <service> -n 50` ; tâches automatiques : `~/.surveillance/*.log` ; `crontab -l`.
 - Services : `portail`, `jellyfin`, `radarr`, `sonarr`, `prowlarr`, `transmission-daemon`, `docker` (Seerr, Immich),
-  `wg-quick@wg0`, `AdGuardHome`, `smbd`, `crowdsec`, `serveur-maison-admin` (pare-feu des outils d'admin).
+  `tailscaled`, `AdGuardHome`, `smbd`, `crowdsec`, `serveur-maison-admin` (pare-feu des outils d'admin).
 - Le portail, Transmission, Radarr, Sonarr et Prowlarr tournent sous le compte `medias` (sans droits) : ne les repasse pas
   sous le compte de la personne. Leurs fichiers sont dans `/var/lib/medias`, `/var/lib/<app>` et `/opt/<App>`.
-- Un outil d'admin injoignable depuis la maison : c'est normal hors VPN si l'appareil n'est pas dans `ADMINS_MAC`.
+- Un outil d'admin injoignable depuis la maison : c'est normal hors Tailscale si l'appareil n'est pas dans `ADMINS_MAC`.
+- Depuis dehors, rien ne répond : `tailscale status` sur le serveur, et `~/outils/configurer.py` (routes approuvées ?).
 - Chaque script a ses tests : `--test` (portail, vitrine, suppressions, mises-a-jour, configurer, profils-anciens).

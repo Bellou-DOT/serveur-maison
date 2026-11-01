@@ -1,5 +1,5 @@
 [Unit]
-Description=@APP@ (interface réservée à la maison et au VPN)
+Description=@APP@ (interface réservée aux appareils admin et à Tailscale)
 After=network-online.target
 
 [Service]

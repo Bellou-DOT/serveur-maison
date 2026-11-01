@@ -1,5 +1,5 @@
 [Unit]
-Description=Portail du serveur maison (http://HOTE, maison + VPN)
+Description=Portail du serveur maison (http://HOTE, maison + Tailscale)
 After=network-online.target
 
 [Service]
