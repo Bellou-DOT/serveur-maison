@@ -19,7 +19,7 @@ Tout est en français et prévu pour **Ubuntu 24.04** sur un PC dédié (8 Go de
 
 Sur ton PC Windows, avec un assistant de code (par exemple [Claude Code](https://claude.com/claude-code)), dis-lui :
 
-> Récupère `<adresse-du-dépôt>` avec git et installe le serveur.
+> Récupère `https://github.com/Bellou-DOT/serveur-maison.git` avec git et installe le serveur.
 
 Il te pose quelques questions, prépare la clé USB (tu tapes toi-même tes mots de passe dans la fenêtre qui s'ouvre)
 et te dit quoi faire ensuite : brancher la clé sur le futur serveur, l'allumer, taper **yes**. Tout le reste se
@@ -51,7 +51,7 @@ Il suit les consignes de [AGENTS.md](AGENTS.md) : il remplit les réglages, inst
 et ne te demande que ce qui doit venir de toi (créer tes comptes, choisir tes mots de passe, réglages de ta box).
 
 ```bash
-git clone <adresse-du-dépôt> serveur-maison
+git clone https://github.com/Bellou-DOT/serveur-maison.git serveur-maison
 cd serveur-maison
 claude          # puis : « installe le serveur »
 ```
@@ -59,7 +59,7 @@ claude          # puis : « installe le serveur »
 #### À la main
 
 ```bash
-git clone <adresse-du-dépôt> serveur-maison
+git clone https://github.com/Bellou-DOT/serveur-maison.git serveur-maison
 cd serveur-maison
 ./installer.sh                         # crée /etc/serveur-maison.conf
 sudo nano /etc/serveur-maison.conf     # tes réglages : noms, adresse IP, ce qu'il faut installer…
@@ -123,3 +123,7 @@ powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File pc-agent.ps1 -Serve
 - Les mots de passe générés sont dans des fichiers lisibles par ton compte et le compte `medias` seuls
   (`/var/lib/medias/.transmission-mdp`…), et dans la sauvegarde des réglages.
 - Ce dépôt installe des logiciels. Ce que tu télécharges avec reste sous ta responsabilité.
+
+## Licence
+
+MIT : voir [LICENSE](LICENSE). Tu peux utiliser, modifier et partager ce projet librement.
