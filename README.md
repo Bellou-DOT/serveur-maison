@@ -3,6 +3,10 @@
 Un vieux PC portable transformé en serveur pour toute la maison, piloté depuis un portail web et le téléphone.
 Tout est en français et prévu pour **Ubuntu 24.04** sur un PC dédié (8 Go de mémoire minimum).
 
+Pas besoin de savoir installer Linux : depuis Windows, une **clé USB d'installation automatique** installe Ubuntu
+Server sur le futur serveur (⚠ son disque est effacé), puis tout le reste, sans écran ni clavier. Ubuntu déjà installé ?
+L'installateur marche aussi seul.
+
 ## Ce qu'il y a dedans
 
 | | |
